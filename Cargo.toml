@@ -1,0 +1,16 @@
+[package]
+name = "rust_server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4.2.1"
+serde_json = "1.0.91"
+simple-log = "1.5.1"
+mongodb = "2.3.1"
+totp-rs = "3.1.0"
+chrono = "0.4.23"
+rand = "0.8.5"
+tokio = "1.23.0"
