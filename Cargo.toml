@@ -21,3 +21,10 @@ rand_core = { version = "0.6", features = ["std"] }
 lazy_static = "1.4.0"
 base64 = "0.20.0"
 jwt-simple = "0.11.2"
+
+
+[source.crates-io]
+replace-with = 'ustc'
+
+[source.ustc]
+registry = "git://mirrors.ustc.edu.cn/crates.io-index"
