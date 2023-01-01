@@ -8,6 +8,7 @@ use simple_log::{info, warn};
 pub fn init(config: &mut Value) {
     info!("Checking configs...");
     let mut edited: bool = false;
+    let mut panic: bool = false;
     let mut rng = rand::thread_rng();
 
 
@@ -46,40 +47,52 @@ pub fn init(config: &mut Value) {
         edited = true;
     }
     if config["connection"]["sslCert"] == Null {
-        warn!("'connection.sslCert' not found, setting to  '.\\keys\\mydomain.crt'  by default.");
+        warn!("'connection.sslCert' not found, setting to  '.\\keys\\mydomain.crt'  by default.[Please change this after panic!]");
         config["connection"]["sslCert"] = Value::from(".\\keys\\mydomain.crt");
         edited = true;
+        panic = true;
     }
     if config["connection"]["sslKey"] == Null {
-        warn!("'connection.sslKey' not found, setting to  '.\\keys\\private.key'  by default.");
+        warn!("'connection.sslKey' not found, setting to  '.\\keys\\private.key'  by default.[Please change this after panic!]");
         config["connection"]["sslKey"] = Value::from(".\\keys\\private.key");
         edited = true;
+        panic = true;
     }
 
 
+    if config["main"]["enabled"] == Null {
+        warn!("'mail.enabled' not found, setting to  false  by default.");
+        config["main"]["enabled"] = Value::from(false);
+        edited = true;
+    }
     if config["mail"]["secureConnection"] == Null {
-        warn!("'mail.secureConnection' not found, setting to  false  by default.");
+        warn!("'mail.secureConnection' not found, setting to  false  by default.[Mail will be disabled! Please enable after change!]");
         config["mail"]["secureConnection"] = Value::from(false);
+        config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
     if config["mail"]["smtpHost"] == Null {
-        warn!("'mail.smtpHost' not found, setting to  'smtp.126.com'  by default.");
+        warn!("'mail.smtpHost' not found, setting to  'smtp.126.com'  by default.[Mail will be disabled! Please enable after change!]");
         config["mail"]["smtpHost"] = Value::from("smtp.126.com");
+        config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
     if config["mail"]["smtpPort"] == Null {
-        warn!("'mail.smtpPort' not found, setting to  25  by default.");
+        warn!("'mail.smtpPort' not found, setting to  25  by default.[Mail will be disabled! Please enable after change!]");
         config["mail"]["smtpPort"] = Value::from(25);
+        config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
     if config["mail"]["token"] == Null {
-        warn!("'mail.token' not found, setting to  '!!!!!'  by default.");
+        warn!("'mail.token' not found, setting to  '!!!!!'  by default.[Mail will be disabled! Please enable after change!]");
         config["mail"]["tokoen"] = Value::from("!!!!!");
+        config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
     if config["mail"]["username"] == Null {
-        warn!("'mail.username' not found, setting to  '111@126.com'  by default.");
+        warn!("'mail.username' not found, setting to  '111@126.com'  by default.[Mail will be disabled! Please enable after change!]");
         config["mail"]["username"] = Value::from("111@126.com");
+        config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
 
@@ -98,6 +111,9 @@ pub fn init(config: &mut Value) {
 
     if edited {
         save(config);
+    }
+    if panic {
+        panic!("Config have false value(s) generated, please change and restart the server. Panic now.");
     }
 }
 
