@@ -1,7 +1,7 @@
-use pbkdf2::password_hash::{SaltString};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 pub mod register;
+pub mod login;
 
 #[derive(Serialize, Deserialize)]
 pub struct UserInfo {
