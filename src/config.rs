@@ -1,5 +1,7 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+use base64::encode;
+use jwt_simple::prelude::HS256Key;
 use rand::distributions::{Alphanumeric, Distribution};
 use serde_json::Value;
 use serde_json::Value::Null;
@@ -28,15 +30,15 @@ pub fn init(config: &mut Value) {
         edited = true;
     }
     if config["pluginPassword"] == Null {
-        let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>().to_lowercase();
+        let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>();
         warn!("'baseUrl' not found, setting to  '{}'  by default.", pass);
         config["baseUrl"] = Value::from(pass);
         edited = true;
     }
     if config["tokenKey"] == Null {
-        let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>().to_lowercase();
-        warn!("'tokenKey' not found, setting to  '{}'  by default.", pass);
-        config["tokenKey"] = Value::from(pass);
+        let key = HS256Key::generate();
+        warn!("'tokenKey' not found, setting to  '{}'  by default.", encode(key.to_bytes()));
+        config["tokenKey"] = Value::from(encode(key.to_bytes()));
         edited = true;
     }
 
