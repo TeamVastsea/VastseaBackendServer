@@ -7,7 +7,6 @@ use crate::user::login::login_password;
 
 pub mod register;
 pub mod login;
-mod email;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserInfo {
