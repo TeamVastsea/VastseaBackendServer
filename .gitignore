@@ -1,1 +1,6 @@
+# Build artifacts
 /target
+
+# User-specific IDE configuration dir
+.idea/
+.vscode/
