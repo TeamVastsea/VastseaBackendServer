@@ -8,14 +8,14 @@ use crate::{CONFIG, MONGODB, user};
 use user::UserInfo;
 
 impl UserInfo {
-    async fn register(&self) -> Result<i32, String> {
+    async fn register(&self) -> Result<(), String> {
         let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
         collection.insert_one(self, None).await.unwrap();
-        Ok(0)
+        Ok(())
     }
 }
 
-pub async fn register(username: String, password: String, mail_box: String) -> Result<i32, String> {
+pub async fn register(username: String, password: String, mail_box: String, ip: &String) -> Result<UserInfo, String> {
     let collect: &Collection<Document> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
     if let Ok(user) = collect.find_one(doc! {"username": &username}, None).await {
         if user != None {
@@ -37,7 +37,10 @@ pub async fn register(username: String, password: String, mail_box: String) -> R
         otp: false,
         password: encode(output),
         salt: salt.to_string(),
+        ip: Some(ip.clone()),
     };
 
-    user.register().await
+    user.register().await.unwrap();
+    user.send_verify_email().await;
+    Ok(user)
 }

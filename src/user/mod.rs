@@ -2,11 +2,12 @@ use actix_web::{get, HttpRequest, HttpResponse, Responder};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use simple_log::debug;
+
 use crate::user::login::login_password;
 
 pub mod register;
 pub mod login;
+pub mod email;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserInfo {
@@ -19,12 +20,22 @@ pub struct UserInfo {
     otp: bool,
     password: String,
     salt: String,
+    pub ip: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct TokenInfo {
     username: String,
     salt: String,
+    ip: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct EmailTokenInfo {
+    username: String,
+    mail_box: String,
+    token: String,
+    time: String,
     ip: String,
 }
 
@@ -47,4 +58,30 @@ pub async fn login_request(req: HttpRequest, req_body: String) -> impl Responder
         Ok(v) => HttpResponse::Ok().body(doc!{"available": true, "content": v}.to_string()),
         Err(e) => HttpResponse::Unauthorized().body(doc!{"available": false, "content": e}.to_string()),
     }
+}
+
+#[get("/register")]
+pub async fn register_request(req: HttpRequest, req_body: String) -> impl Responder{
+    let content = match serde_json::from_str::<Value>(&req_body) {
+        Err(e) => {return HttpResponse::InternalServerError().body(e.to_string());},
+        Ok(v) => v,
+    };
+    let username = match content["username"].as_str() {
+        Some(v) => v,
+        None => {return HttpResponse::InternalServerError().body("Username missing");}
+    };
+    let password = match content["password"].as_str() {
+        Some(v) => v,
+        None => {return HttpResponse::InternalServerError().body("Password missing");}
+    };
+    let mailbox = match content["mailbox"].as_str() {
+        Some(v) => v,
+        None => {return HttpResponse::InternalServerError().body("Mailbox missing");}
+    };
+    let ip = req.peer_addr().unwrap().ip();
+    match register::register(username.to_string(), password.to_string(), mailbox.to_string(), &ip.to_string()).await {
+        Err(e) => {return HttpResponse::InternalServerError().body(e);},
+        Ok(user) => {user.send_verify_email().await;}
+    }
+    HttpResponse::Ok().body("0")
 }

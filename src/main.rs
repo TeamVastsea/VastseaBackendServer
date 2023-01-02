@@ -6,17 +6,20 @@ use std::io::{Read};
 use actix_web::{App, HttpResponse, HttpServer, Responder, get};
 use chrono::{Local};
 use mongodb::{Client, Database};
+use mongodb::bson::doc;
 use mongodb::options::ClientOptions;
 use serde_json::Value;
-use simple_log::{debug, info, LogConfigBuilder, warn};
+use shadow_rs::shadow;
+use simple_log::{info, LogConfigBuilder};
+
 
 
 static mut CONFIG: Value = Value::Null;
 static mut MONGODB: Option<Database> = None;
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
     let mut file_name = "./log/".to_owned();
     file_name += &Local::now().format("%Y-%m-%d.%H-%M-%S").to_string();
     file_name += ".log";
@@ -54,8 +57,6 @@ async fn main() -> std::io::Result<()> {
     let db = client.database(&unsafe { &CONFIG }["mongodb"]["dbName"].as_str().unwrap());
     unsafe { MONGODB = Some(db); }
 
-    user::register::register("test01".to_string(), "123456".to_string(), "test@1.com".to_string()).await.unwrap();
-
     HttpServer::new(|| {
         App::new()
             .service(echo)
@@ -66,6 +67,7 @@ async fn main() -> std::io::Result<()> {
 
 
 #[get("/ping")]
-async fn echo(_req_body: String) -> impl Responder {
-    HttpResponse::Ok().body("api v2")
+async fn echo() -> impl Responder {
+    shadow!(build);
+    HttpResponse::Ok().body(doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string())
 }

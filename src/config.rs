@@ -73,15 +73,9 @@ pub fn init(config: &mut Value) {
         config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
-    if config["mail"]["smtpHost"] == Null {
-        warn!("'mail.smtpHost' not found, setting to  'smtp.126.com'  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["smtpHost"] = Value::from("smtp.126.com");
-        config["main"]["enabled"] = Value::from(false);
-        edited = true;
-    }
-    if config["mail"]["smtpPort"] == Null {
-        warn!("'mail.smtpPort' not found, setting to  25  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["smtpPort"] = Value::from(25);
+    if config["mail"]["smtpUrl"] == Null {
+        warn!("'mail.smtpHost' not found, setting to  'smtp.126.com:25'  by default.[Mail will be disabled! Please enable after change!]");
+        config["mail"]["smtpUrl"] = Value::from("smtp.126.com:25");
         config["main"]["enabled"] = Value::from(false);
         edited = true;
     }
