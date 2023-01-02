@@ -7,5 +7,11 @@
                  bat 'cargo build --color=always --release --package rust_server --bin rust_server'
              }
          }
+         stage('Deploy') {
+             steps {
+             bat 'make'
+             archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+             }
+         }
      }
  }
