@@ -31,13 +31,13 @@ pub fn init(config: &mut Value) {
     }
     if config["pluginPassword"] == Null {
         let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>();
-        warn!("'baseUrl' not found, setting to  '{}'  by default.", pass);
-        config["baseUrl"] = Value::from(pass);
+        warn!("'pluginPassword' not found, setting to  '{}'  by default.", pass);
+        config["pluginPassword"] = Value::from(pass);
         edited = true;
     }
     if config["tokenKey"] == Null {
         let key = HS256Key::generate();
-        warn!("'tokenKey' not found, setting to  '{}'  by default.", encode(key.to_bytes()));
+        warn!("'tokenKey' not found, setting to  '{}' .", encode(key.to_bytes()));
         config["tokenKey"] = Value::from(encode(key.to_bytes()));
         edited = true;
     }
@@ -81,7 +81,7 @@ pub fn init(config: &mut Value) {
     }
     if config["mail"]["token"] == Null {
         warn!("'mail.token' not found, setting to  '!!!!!'  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["tokoen"] = Value::from("!!!!!");
+        config["mail"]["token"] = Value::from("!!!!!");
         config["main"]["enabled"] = Value::from(false);
         edited = true;
     }

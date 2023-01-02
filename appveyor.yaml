@@ -1,5 +1,0 @@
-version: 1.0.{build}
-build_script:
-  - cmd: cargo build --color=always --release --package rust_server --bin rust_server
-artifacts:
-  - path: /target/release/*.exe
