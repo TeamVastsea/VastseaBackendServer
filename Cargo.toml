@@ -22,6 +22,8 @@ lazy_static = "1.4.0"
 base64 = "0.20.0"
 jwt-simple = "0.11.2"
 
+[build-dependencies]
+embed-resource = "1.8.0"
 
 [source.crates-io]
 replace-with = 'ustc'
