@@ -5,7 +5,7 @@
              steps {
                  bat '''set CARGO_HOME=C:\\Users\\Administrator\\.cargo
                  rustup update nightly
-                 cargo build --color=always --release --package rust_server --bin rust_server'''
+                 cargo build  --release --package rust_server --bin rust_server'''
              }
          }
          stage('Deploy') {
