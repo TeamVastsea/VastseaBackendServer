@@ -24,7 +24,7 @@ impl UserInfo {
     }
 }
 
-pub async fn login_password(username: String, password: String, ip: String) -> Result<String, String> {
+pub async fn login_password(username: String, password: String, ip: String) -> Result<(UserInfo, String), String> {
     let collect = &unsafe {MONGODB.as_ref()}.unwrap().collection("users");
     let user: UserInfo = match collect.find_one(doc! {"username": &username}, None).await {
         Ok(Some(a)) => a,
@@ -39,11 +39,11 @@ pub async fn login_password(username: String, password: String, ip: String) -> R
     }
 
     user.log_login(&ip, "password").await;
-    Ok(user.get_token(TokenInfo{
+    Ok((user.clone(), user.get_token(TokenInfo{
         username,
         salt: user.salt.clone(),
         ip,
-    }))
+    })))
 }
 
 pub async fn login_token(token: &str, ip: &str) -> Result<UserInfo, ()> {

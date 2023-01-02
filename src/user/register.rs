@@ -41,6 +41,5 @@ pub async fn register(username: String, password: String, mail_box: String, ip: 
     };
 
     user.register().await.unwrap();
-    user.send_verify_email().await;
     Ok(user)
 }

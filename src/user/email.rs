@@ -2,19 +2,25 @@ use chrono::Local;
 use lettre::{Message, SmtpTransport, Transport};
 use lettre::message::SinglePart;
 use lettre::transport::smtp::authentication::Credentials;
+use mongodb::bson::doc;
 use mongodb::Collection;
 use rand::distributions::Alphanumeric;
 use rand::prelude::Distribution;
 use simple_log::{debug, error};
 use crate::{CONFIG, MONGODB};
 use crate::user::{EmailTokenInfo, UserInfo};
+use crate::user::login::login_password;
 
 impl EmailTokenInfo {
     async fn generate_token(&mut self) -> String {
+        //delete previous ones
+        let collection: &Collection<EmailTokenInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("email_token");
+        collection.delete_many(doc! {"username": self.username.clone()}, None).await.unwrap();
+
+        //generate a new one
         let mut rng = rand::thread_rng();
         let token: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>();
         self.token = token;
-        let collection: &Collection<EmailTokenInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("email_token");
         collection.insert_one(self.clone(), None).await.unwrap();
         self.token.clone()
     }
@@ -59,5 +65,32 @@ impl UserInfo {
               <h3 style='position: relative; width: 410px; text-align: center;left: 20px; top: 90px;'>欢迎加入瀚海!</h3>
         </span>"###, unsafe { CONFIG["baseUrl"].as_str().unwrap() }, token.generate_token().await);
         token.send("激活您的账号".to_string(), content);
+    }
+}
+
+pub async fn verify_email(token: String, password: String) -> Result<(), String> {
+    //find token in database
+    let collection: &Collection<EmailTokenInfo> = unsafe{ &MONGODB.as_ref().unwrap().collection("email_token") };
+    let token_info = match collection.find_one(doc! {"token": token}, None).await {
+        Ok(a) => match a {
+            Some(a) => a,
+            None => return Err("Token information not found.".to_string())
+        },
+        Err(e) => { error!("Database error: {}", e.to_string()); return Err("Database error.".to_string()); },
+    };
+    //verify password
+    let res = match login_password(token_info.username.clone(), password, "127.0.0.1".to_string()).await {
+        Ok((_, _)) => (false, "".to_string()),
+        Err(e) => { if e == "User not enabled" { (true, e) } else { (false, "".to_string()) } },
+    };
+    if res.0 {
+        return Err(res.1);
+    }
+    //remove the token from the database
+    collection.delete_many(doc! {"username":token_info.username.clone()}, None).await.unwrap();
+    let collection: &Collection<EmailTokenInfo> = unsafe{ &MONGODB.as_ref().unwrap().collection("users") };
+    match collection.update_one(doc! {"username": token_info.username}, doc! {"$set": {"enabled": true}}, None).await {
+        Ok(_) => Ok(()),
+        Err(e) => { error!("Database error: {}", e);  Err(e.to_string()) },
     }
 }

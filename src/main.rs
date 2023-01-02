@@ -3,7 +3,7 @@ mod user;
 
 use std::fs::{OpenOptions};
 use std::io::{Read};
-use actix_web::{App, HttpResponse, HttpServer, Responder, get};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, HttpRequest};
 use chrono::{Local};
 use mongodb::{Client, Database};
 use mongodb::bson::doc;
@@ -11,7 +11,6 @@ use mongodb::options::ClientOptions;
 use serde_json::Value;
 use shadow_rs::shadow;
 use simple_log::{info, LogConfigBuilder};
-
 
 
 static mut CONFIG: Value = Value::Null;
@@ -61,13 +60,16 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(echo)
             .service(user::login_request)
+            .service(user::register_request)
+            .service(user::verify_email_request)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }
 
 
 #[get("/ping")]
-async fn echo() -> impl Responder {
+async fn echo(req: HttpRequest) -> impl Responder {
     shadow!(build);
+    info!("200/ping->{}: {}", req.peer_addr().unwrap().ip().to_string(), doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string());
     HttpResponse::Ok().body(doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string())
 }
