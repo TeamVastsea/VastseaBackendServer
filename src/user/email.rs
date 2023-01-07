@@ -70,27 +70,33 @@ impl UserInfo {
 
 pub async fn verify_email(token: String, password: String) -> Result<(), String> {
     //find token in database
-    let collection: &Collection<EmailTokenInfo> = unsafe{ &MONGODB.as_ref().unwrap().collection("email_token") };
+    let collection: &Collection<EmailTokenInfo> = unsafe { &MONGODB.as_ref().unwrap().collection("email_token") };
     let token_info = match collection.find_one(doc! {"token": token}, None).await {
         Ok(a) => match a {
             Some(a) => a,
             None => return Err("Token information not found.".to_string())
         },
-        Err(e) => { error!("Database error: {}", e.to_string()); return Err("Database error.".to_string()); },
+        Err(e) => {
+            error!("Database error: {}", e.to_string());
+            return Err("Database error.".to_string());
+        }
     };
     //verify password
     let res = match login_password(token_info.username.clone(), password, "127.0.0.1".to_string()).await {
         Ok((_, _)) => (false, "".to_string()),
-        Err(e) => { if e == "User not enabled" { (true, e) } else { (false, "".to_string()) } },
+        Err(e) => { if e == "User not enabled" { (false, e) } else { (true, e) } }
     };
     if res.0 {
         return Err(res.1);
     }
     //remove the token from the database
     collection.delete_many(doc! {"username":token_info.username.clone()}, None).await.unwrap();
-    let collection: &Collection<EmailTokenInfo> = unsafe{ &MONGODB.as_ref().unwrap().collection("users") };
+    let collection: &Collection<EmailTokenInfo> = unsafe { &MONGODB.as_ref().unwrap().collection("users") };
     match collection.update_one(doc! {"username": token_info.username}, doc! {"$set": {"enabled": true}}, None).await {
         Ok(_) => Ok(()),
-        Err(e) => { error!("Database error: {}", e);  Err(e.to_string()) },
+        Err(e) => {
+            error!("Database error: {}", e);
+            Err(e.to_string())
+        }
     }
 }

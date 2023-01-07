@@ -18,7 +18,6 @@ static mut MONGODB: Option<Database> = None;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
     let mut file_name = "./log/".to_owned();
     file_name += &Local::now().format("%Y-%m-%d.%H-%M-%S").to_string();
     file_name += ".log";
@@ -32,7 +31,6 @@ async fn main() -> std::io::Result<()> {
         .output_file()
         .output_console()
         .build();
-
     simple_log::new(config).expect("Cannot init logger");
 
     info!("Initializing...");
@@ -62,6 +60,8 @@ async fn main() -> std::io::Result<()> {
             .service(user::login_request)
             .service(user::register_request)
             .service(user::verify_email_request)
+            .service(user::bind_token)
+            .service(user::bind_qq)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }

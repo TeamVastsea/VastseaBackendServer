@@ -2,7 +2,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use base64::encode;
 use jwt_simple::prelude::HS256Key;
-use rand::distributions::{Alphanumeric, Distribution};
+
 use serde_json::Value;
 use serde_json::Value::Null;
 use simple_log::{info, warn};
@@ -10,9 +10,7 @@ use simple_log::{info, warn};
 pub fn init(config: &mut Value) {
     info!("Checking configs...");
     let mut edited: bool = false;
-    let mut panic: bool = false;
-    let mut rng = rand::thread_rng();
-
+    // let mut rng = rand::thread_rng();
 
     if config["allowLocalHost"] == Null {
         warn!("'allowLocalHost' not found, setting to  false  by default.");
@@ -29,12 +27,12 @@ pub fn init(config: &mut Value) {
         config["defaultUserGroup"] = Value::from("user");
         edited = true;
     }
-    if config["pluginPassword"] == Null {
-        let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>();
-        warn!("'pluginPassword' not found, setting to  '{}'  by default.", pass);
-        config["pluginPassword"] = Value::from(pass);
-        edited = true;
-    }
+    // if config["pluginPassword"] == Null {
+    //     let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>();
+    //     warn!("'pluginPassword' not found, setting to  '{}'  by default.", pass);
+    //     config["pluginPassword"] = Value::from(pass);
+    //     edited = true;
+    // }
     if config["tokenKey"] == Null {
         let key = HS256Key::generate();
         warn!("'tokenKey' not found, setting to  '{}' .", encode(key.to_bytes()));
@@ -49,16 +47,14 @@ pub fn init(config: &mut Value) {
         edited = true;
     }
     if config["connection"]["sslCert"] == Null {
-        warn!("'connection.sslCert' not found, setting to  '.\\keys\\mydomain.crt'  by default.[Please change this after panic!]");
-        config["connection"]["sslCert"] = Value::from(".\\keys\\mydomain.crt");
+        warn!("'connection.sslCert' not found, setting to  '.\\keys\\my_domain.crt'  by default.");
+        config["connection"]["sslCert"] = Value::from(".\\keys\\my_domain.crt");
         edited = true;
-        panic = true;
     }
     if config["connection"]["sslKey"] == Null {
-        warn!("'connection.sslKey' not found, setting to  '.\\keys\\private.key'  by default.[Please change this after panic!]");
+        warn!("'connection.sslKey' not found, setting to  '.\\keys\\private.key'  by default.");
         config["connection"]["sslKey"] = Value::from(".\\keys\\private.key");
         edited = true;
-        panic = true;
     }
 
 
@@ -107,8 +103,6 @@ pub fn init(config: &mut Value) {
 
     if edited {
         save(config);
-    }
-    if panic {
         panic!("Config have false value(s) generated, please change and restart the server. Panic now.");
     }
 }
