@@ -59,6 +59,7 @@ async fn main() -> std::io::Result<()> {
             .service(echo)
             .service(user::register_request)
             .service(user::bind_qq)
+            .service(user::get_qq)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }
