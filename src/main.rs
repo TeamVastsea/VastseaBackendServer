@@ -57,15 +57,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(echo)
-            .service(user::login_request)
             .service(user::register_request)
-            .service(user::verify_email_request)
-            .service(user::bind_token)
             .service(user::bind_qq)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }
-
 
 #[get("/ping")]
 async fn echo(req: HttpRequest) -> impl Responder {
