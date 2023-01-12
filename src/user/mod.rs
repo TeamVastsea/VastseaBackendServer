@@ -8,6 +8,7 @@ pub mod register;
 pub mod bind;
 pub mod microsoft;
 pub mod xbox;
+pub mod minecraft;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserInfo {

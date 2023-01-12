@@ -1,14 +1,13 @@
 
-use std::{borrow::BorrowMut, collections::HashMap};
+use std::{collections::HashMap};
 
-use base64::Engine;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use simple_log::debug;
 use urlencoding::{encode, decode};
 use hyper::{Body, Client, Request, body::HttpBody, http::HeaderValue};
 use lazy_static::lazy_static;
-use serde_json::{from_str, Error};
+use serde_json::{from_str};
 
 use super::microsoft::LoginResponse;
 lazy_static!{
