@@ -10,9 +10,10 @@ lazy_static!{
     pub static ref SIGN_IN_URL: String = format!("https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id={}&response_type=code&redirect_uri=https%3A%2F%2Fmccteam.github.io%2Fredirect.html&scope=XboxLive.signin%20offline_access%20openid%20email&prompt=select_account&response_mode=fragment", CLIENT_ID.clone());
     pub static ref TOKEN_URL: String = String::from("https://login.microsoftonline.com/consumers/oauth2/v2.0/token");
 }
-pub fn get_sign_in_url_with_hint(loginHint:String)->String
+#[allow(dead_code)]
+pub fn get_sign_in_url_with_hint(login_hint:String)->String
 {
-    return SIGN_IN_URL.clone()+&String::from("&login_hint=")+&encode(loginHint.as_str()).into_owned();
+    return SIGN_IN_URL.clone()+&String::from("&login_hint=")+&encode(login_hint.as_str()).into_owned();
 }
 #[derive(Clone,Debug,Deserialize, Serialize)]
 pub struct LoginResponse {
@@ -29,22 +30,25 @@ pub struct JwtPayload
 {
     pub email: String
 }
+#[allow(dead_code)]
 pub async fn request_access_token(code: String)->Result<LoginResponse,String> {
     request_token(format!("client_id={}&grant_type=authorization_code&redirect_uri=https%3A%2F%2Fmccteam.github.io%2Fredirect.html&code={}",CLIENT_ID.clone(),code)).await
 }
-pub async fn refresh_access_token(refreshToken: String) -> Result<LoginResponse,String> {
-    request_token(format!("client_id={}&grant_type=refresh_token&redirect_uri=https%3A%2F%2Fmccteam.github.io%2Fredirect.html&refresh_token={}",CLIENT_ID.clone(),refreshToken)).await
+#[allow(dead_code)]
+pub async fn refresh_access_token(refresh_token: String) -> Result<LoginResponse,String> {
+    request_token(format!("client_id={}&grant_type=refresh_token&redirect_uri=https%3A%2F%2Fmccteam.github.io%2Fredirect.html&refresh_token={}",CLIENT_ID.clone(),refresh_token)).await
 }
+#[allow(dead_code)]
 pub fn get_payload(token: String) -> Result<String,String>{
     let content=token.split('.').nth(1);
     if content.is_none() {
         return Err("cannot find content in the token".to_string());
     }
-    let jsonPayload=String::from_utf8(decode(content.unwrap().to_string())?);
-    if jsonPayload.is_err() {
-        return Err(jsonPayload.err().unwrap().to_string());
+    let json_payload=String::from_utf8(decode(content.unwrap().to_string())?);
+    if json_payload.is_err() {
+        return Err(json_payload.err().unwrap().to_string());
     }
-    return Ok(jsonPayload.unwrap());
+    return Ok(json_payload.unwrap());
 }
 pub fn decode(input: String) -> Result<Vec<u8>,String> {
     let mut output=input;
@@ -62,7 +66,7 @@ pub fn decode(input: String) -> Result<Vec<u8>,String> {
     }
     return Ok(converted.unwrap());
 }
-pub async fn request_token(postData: String)->Result<LoginResponse,String> {
+pub async fn request_token(post_data: String)->Result<LoginResponse,String> {
     let client=Client::new();
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
@@ -72,7 +76,7 @@ pub async fn request_token(postData: String)->Result<LoginResponse,String> {
     headers.insert("Accept",HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type",HeaderValue::from_static("application/x-www-form-urlencoded"));
-    let response=client.request(request_builder.uri(TOKEN_URL.clone()).body(Body::from(postData)).unwrap()).await;
+    let response=client.request(request_builder.uri(TOKEN_URL.clone()).body(Body::from(post_data)).unwrap()).await;
     if response.is_err()
     {
         return Err(response.err().unwrap().to_string());
@@ -91,10 +95,10 @@ pub async fn request_token(postData: String)->Result<LoginResponse,String> {
         return Err(resp.error_description.unwrap());
     }else{
         let payload=get_payload(resp.clone().id_token.unwrap());
-        let jsonPayload:Result<JwtPayload,Error>=from_str(payload?.as_str());
-        if jsonPayload.is_err(){
-            return Err(jsonPayload.err().unwrap().to_string());
+        let json_payload:Result<JwtPayload,Error>=from_str(payload?.as_str());
+        if json_payload.is_err(){
+            return Err(json_payload.err().unwrap().to_string());
         }
-        return Ok(LoginResponse{email: Some(jsonPayload.unwrap().email),..resp});
+        return Ok(LoginResponse{email: Some(json_payload.unwrap().email),..resp});
     }
 }

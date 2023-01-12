@@ -1,6 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use base64::encode;
+use base64::Engine;
 use jwt_simple::prelude::HS256Key;
 
 use serde_json::Value;
@@ -35,8 +35,8 @@ pub fn init(config: &mut Value) {
     // }
     if config["tokenKey"] == Null {
         let key = HS256Key::generate();
-        warn!("'tokenKey' not found, setting to  '{}' .", encode(key.to_bytes()));
-        config["tokenKey"] = Value::from(encode(key.to_bytes()));
+        warn!("'tokenKey' not found, setting to  '{}' .", base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
+        config["tokenKey"] = Value::from(base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
         edited = true;
     }
 

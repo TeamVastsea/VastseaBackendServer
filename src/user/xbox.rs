@@ -24,9 +24,9 @@ lazy_static!{
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PreAuthResponse {
-    pub UrlPost: String,
-    pub PPFT: String,
-    pub Cookies: String
+    pub url_post: String,
+    pub ppft: String,
+    pub cookies: String
 }
 pub async fn pre_auth()->Result<PreAuthResponse,String> {
     let client=Client::new();
@@ -53,39 +53,39 @@ pub async fn pre_auth()->Result<PreAuthResponse,String> {
         return Err("Fail to extract PPFT".to_string());
     }
     let ppft_=&ppft_.unwrap()[1];
-    let urlPost=URL_POST.captures(data_str.as_str());
-    if urlPost.is_none() {
+    let url_post=URL_POST.captures(data_str.as_str());
+    if url_post.is_none() {
         return Err("Fail to extract urlPost".to_string());
     }
-    let urlPost=&urlPost.unwrap()[1];
+    let url_post=&url_post.unwrap()[1];
     let tmp=HeaderValue::from_static("");
-    Ok(PreAuthResponse { UrlPost: urlPost.to_string(), PPFT: ppft_.to_string(), Cookies: resp.headers().get(hyper::header::SET_COOKIE).or_else(||Some(&tmp)).unwrap().to_str().unwrap().to_string() })
+    Ok(PreAuthResponse { url_post: url_post.to_string(), ppft: ppft_.to_string(), cookies: resp.headers().get(hyper::header::SET_COOKIE).or_else(||Some(&tmp)).unwrap().to_str().unwrap().to_string() })
 }
 pub fn parse_query_string(query:String)->HashMap<String,String>
 {
-    let res=HashMap::new();
+    let mut res=HashMap::new();
     for i in query.split("&")
     {
         res.insert(i.split('=').nth(0).unwrap().to_string(), decode(i.split('=').nth(1).unwrap()).unwrap().to_string());
     }
     return res;
 }
-pub async fn user_login(email:String,password:String,preAuth:PreAuthResponse)->Result<LoginResponse,String>
+pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->Result<LoginResponse,String>
 {
     let client=Client::new();
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     let ua=USERAGENT.clone();
-    headers.insert(hyper::header::COOKIE, HeaderValue::from_str(&preAuth.Cookies).unwrap());
+    headers.insert(hyper::header::COOKIE, HeaderValue::from_str(&pre_auth.cookies).unwrap());
     headers.insert("User-Agent",HeaderValue::from_str(&ua).unwrap());
     headers.insert("Accept",HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type",HeaderValue::from_static("application/x-www-form-urlencoded"));
-    let postData="login=".to_owned() + &encode(&email).into_owned()
+    let post_data="login=".to_owned() + &encode(&email).into_owned()
     + "&loginfmt=" + &encode(&email).into_owned()
     + "&passwd=" + &encode(&password).into_owned()
-    + "&PPFT=" + &encode(&preAuth.PPFT).into_owned();
-    let response=client.request(request_builder.uri(preAuth.UrlPost).body(Body::from(postData)).unwrap()).await;
+    + "&PPFT=" + &encode(&pre_auth.ppft).into_owned();
+    let response=client.request(request_builder.uri(pre_auth.url_post).body(Body::from(post_data)).unwrap()).await;
     if response.is_err()
     {
         return Err(response.err().unwrap().to_string());
@@ -147,7 +147,7 @@ pub async fn user_login(email:String,password:String,preAuth:PreAuthResponse)->R
         }
     }
 }
-pub async fn xbl_authenticate(loginResponse:LoginResponse,browser:bool)->Result<AuthenticateResponse,String>
+pub async fn xbl_authenticate(login_response:LoginResponse,browser:bool)->Result<AuthenticateResponse,String>
 {
     let client=Client::new();
     let mut request_builder=Request::builder().method("POST");
@@ -158,24 +158,24 @@ pub async fn xbl_authenticate(loginResponse:LoginResponse,browser:bool)->Result<
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type",HeaderValue::from_static("application/json"));
     headers.insert("x-xbl-contract-version",HeaderValue::from_static("0"));
-    let accessToken=loginResponse.access_token;
-    if accessToken.is_none() {
+    let access_token=login_response.access_token;
+    if access_token.is_none() {
         return Err("accessToken cannot be null".to_string());
     }
-    let mut accessToken=accessToken.unwrap();
+    let mut access_token=access_token.unwrap();
     if browser {
-        accessToken = "d=".to_owned() + &accessToken;
+        access_token = "d=".to_owned() + &access_token;
     }
-    let postData="{".to_owned()
+    let post_data="{".to_owned()
     + "\"Properties\": {"
     + "\"AuthMethod\": \"RPS\","
     + "\"SiteName\": \"user.auth.xboxlive.com\","
-    + "\"RpsTicket\": \"" + &accessToken + "\""
+    + "\"RpsTicket\": \"" + &access_token + "\""
     + "},"
     + "\"RelyingParty\": \"http://auth.xboxlive.com\","
     + "\"TokenType\": \"JWT\""
     + "}";
-    let response=client.request(request_builder.uri(XBL.clone()).body(Body::from(postData)).unwrap()).await;
+    let response=client.request(request_builder.uri(XBL.clone()).body(Body::from(post_data)).unwrap()).await;
     if response.is_err()
     {
         return Err(response.err().unwrap().to_string());
@@ -190,14 +190,14 @@ pub async fn xbl_authenticate(loginResponse:LoginResponse,browser:bool)->Result<
     debug!("{}",data_unwrap);
     if resp.status().as_u16()==200 {
         let json:XBLJson=from_str(data_unwrap.as_str()).unwrap();
-        return Ok(AuthenticateResponse { respType:"xbl".to_string(),Token: json.Token, UserHash: json.DisplayClaims.xui[0].clone().uhs });
+        return Ok(AuthenticateResponse { resp_type:"xbl".to_string(),token: json.Token, user_hash: json.DisplayClaims.xui[0].clone().uhs });
     }else{
         return Err("XBL Authentication failed".to_string());
     }
 }
-pub async fn xsts_authenticate(xblResponse:AuthenticateResponse)->Result<AuthenticateResponse,String>
+pub async fn xsts_authenticate(xbl_response:AuthenticateResponse)->Result<AuthenticateResponse,String>
 {
-    if xblResponse.respType != "xbl" {
+    if xbl_response.resp_type != "xbl" {
         return Err("arg xblResponse type mismatch".to_string());
     }
     let client=Client::new();
@@ -209,17 +209,17 @@ pub async fn xsts_authenticate(xblResponse:AuthenticateResponse)->Result<Authent
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type",HeaderValue::from_static("application/json"));
     headers.insert("x-xbl-contract-version",HeaderValue::from_static("1"));
-    let postData="{".to_owned()
+    let post_data="{".to_owned()
     + "\"Properties\": {"
     + "\"SandboxId\": \"RETAIL\","
     + "\"UserTokens\": ["
-    + "\"" + &xblResponse.Token + "\""
+    + "\"" + &xbl_response.token + "\""
     + "]"
     + "},"
     + "\"RelyingParty\": \"rp://api.minecraftservices.com/\","
     + "\"TokenType\": \"JWT\""
     + "}";
-    let response=client.request(request_builder.uri(XBL.clone()).body(Body::from(postData)).unwrap()).await;
+    let response=client.request(request_builder.uri(XBL.clone()).body(Body::from(post_data)).unwrap()).await;
     if response.is_err()
     {
         return Err(response.err().unwrap().to_string());
@@ -234,7 +234,7 @@ pub async fn xsts_authenticate(xblResponse:AuthenticateResponse)->Result<Authent
     debug!("{}",data_unwrap);
     if resp.status().as_u16()==200 {
         let json:XBLJson=from_str(data_unwrap.as_str()).unwrap();
-        return Ok(AuthenticateResponse {respType:"xsts".to_string(), Token: json.Token, UserHash: json.DisplayClaims.xui[0].clone().uhs });
+        return Ok(AuthenticateResponse {resp_type:"xsts".to_string(), token: json.Token, user_hash: json.DisplayClaims.xui[0].clone().uhs });
     }else{
         if resp.status().as_u16()==401 {
             let json:XErr=from_str(data_unwrap.as_str()).unwrap();
@@ -253,10 +253,11 @@ pub async fn xsts_authenticate(xblResponse:AuthenticateResponse)->Result<Authent
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AuthenticateResponse{
-    pub respType: String,
-    pub Token:String,
-    pub UserHash:String
+    pub resp_type: String,
+    pub token:String,
+    pub user_hash:String
 }
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct XBLJson{
     pub Token: String,
@@ -270,6 +271,7 @@ pub struct DisplayClaims{
 pub struct XUI{
     pub uhs: String
 }
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct XErr{
     XErr: u64
