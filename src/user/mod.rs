@@ -11,8 +11,8 @@ pub mod xbox;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserInfo {
-    bind_qq: i64,
-    uuid: String,
+    pub bind_qq: i64,
+    pub uuid: String,
 }
 
 #[get("/register")]

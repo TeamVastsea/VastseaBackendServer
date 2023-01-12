@@ -16,18 +16,18 @@ pub fn get_sign_in_url_with_hint(loginHint:String)->String
 }
 #[derive(Clone,Debug,Deserialize, Serialize)]
 pub struct LoginResponse {
-    email: Option<String>,
-    access_token: Option<String>,
-    refresh_token: Option<String>,
-    expires_in: Option<i32>,
-    error: Option<String>,
-    error_description: Option<String>,
-    id_token: Option<String>
+    pub email: Option<String>,
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
+    pub expires_in: Option<i32>,
+    pub error: Option<String>,
+    pub error_description: Option<String>,
+    pub id_token: Option<String>
 }
 #[derive(Clone,Debug,Deserialize, Serialize)]
 pub struct JwtPayload
 {
-    email: String
+    pub email: String
 }
 pub async fn request_access_token(code: String)->Result<LoginResponse,String> {
     request_token(format!("client_id={}&grant_type=authorization_code&redirect_uri=https%3A%2F%2Fmccteam.github.io%2Fredirect.html&code={}",CLIENT_ID.clone(),code)).await

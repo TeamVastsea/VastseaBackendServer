@@ -25,6 +25,7 @@ lettre = "0.10.1"
 shadow-rs = "0.20.0"
 urlencoding = "2.1.2"
 hyper = {version="0.14.23",features = ["full"]}
+regex = "1.7.1"
 
 [build-dependencies]
 embed-resource = "1.8.0"
