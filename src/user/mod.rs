@@ -152,20 +152,20 @@ pub async fn get_qq(req: HttpRequest, req_body: String) -> impl Responder {
         }
         Ok(v) => v,
     };
-    let token = match content["token"].as_str() {
+    let uuid = match content["uuid"].as_str() {
         Some(v) => v,
         None => {
-            warn!("500/get_qq->{}: Token missing", ip.to_string());
-            return HttpResponse::InternalServerError().body("Token missing");
+            warn!("500/get_qq->{}: UUID missing", ip.to_string());
+            return HttpResponse::InternalServerError().body("UUID missing");
         }
     };
-    let profile=crate::user::minecraft::get_user_profile(token.to_string()).await;
+    /*let profile=crate::user::minecraft::get_user_profile(uuid.to_string()).await;
     if let Err(err) = profile {
         warn!("500/get_qq->{}: Could not get profile\n{}", ip.to_string(),err);
         return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned()+&err);
     }
-    let profile=profile.unwrap();
-    match UserInfo::find_uuid(profile.uuid).await {
+    let profile=profile.unwrap();*/
+    match UserInfo::find_uuid(/*profile.*/uuid.to_string()).await {
         Ok(p) => { return HttpResponse::Ok().body(p.bind_qq.to_string()).into(); }
         Err(e) => {
                 warn!("500/get_qq->{}: {}", ip.to_string(), e);
