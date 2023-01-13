@@ -83,7 +83,21 @@ pub async fn request_token(post_data: String)->Result<LoginResponse,String> {
     {
         return Err(response.err().unwrap().to_string());
     }
-    let data=String::from_utf8(response.unwrap().into_body().data().await.unwrap().unwrap().to_vec());
+    let mut resp=response.unwrap();
+    let mut all_data=vec![];
+    while !resp.is_end_stream() {
+        let data=resp.body_mut().data().await;
+        if data.is_none() {
+            return Err("cannot read response".to_string());
+        }
+        let data=data.unwrap();
+        if let Err(err)=data {
+            return Err("cannot read response\n".to_owned()+&err.to_string());
+        }
+        let data=data.unwrap();
+        all_data.append(&mut data.to_vec());
+    }
+    let data=String::from_utf8(all_data);
     if data.is_err()
     {
         return Err(data.err().unwrap().to_string());

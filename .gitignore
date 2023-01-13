@@ -4,3 +4,6 @@
 # User-specific IDE configuration dir
 .idea/
 .vscode/
+
+server.config.json
+log
