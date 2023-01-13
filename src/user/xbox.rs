@@ -1,4 +1,5 @@
 
+use hyper_tls::HttpsConnector;
 use std::{collections::HashMap};
 
 use regex::Regex;
@@ -29,7 +30,8 @@ pub struct PreAuthResponse {
     pub cookies: String
 }
 pub async fn pre_auth()->Result<PreAuthResponse,String> {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("GET");
     let headers=request_builder.headers_mut().unwrap();
     let ua=USERAGENT.clone();
@@ -72,7 +74,8 @@ pub fn parse_query_string(query:String)->HashMap<String,String>
 }
 pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->Result<LoginResponse,String>
 {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     let ua=USERAGENT.clone();
@@ -107,7 +110,8 @@ pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->
         let url=url.unwrap().to_str().unwrap().to_string();
         let url2=url.clone();
         let hash=url2.split('#').nth(1);
-        let client2=Client::new();
+        let https2=HttpsConnector::new();
+    let client2=Client::builder().build::<_,hyper::Body>(https2);
     let mut request_builder2=Request::builder().method("GET");
     let headers2=request_builder2.headers_mut().unwrap();
     let ua2=USERAGENT.clone();
@@ -149,7 +153,8 @@ pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->
 }
 pub async fn xbl_authenticate(login_response:LoginResponse,browser:bool)->Result<AuthenticateResponse,String>
 {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     let ua=USERAGENT.clone();
@@ -200,7 +205,8 @@ pub async fn xsts_authenticate(xbl_response:AuthenticateResponse)->Result<Authen
     if xbl_response.resp_type != "xbl" {
         return Err("arg xblResponse type mismatch".to_string());
     }
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     let ua=USERAGENT.clone();

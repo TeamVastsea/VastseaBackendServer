@@ -1,3 +1,4 @@
+use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
 use simple_log::debug;
 use hyper::{Body, Client, Request, body::HttpBody, http::HeaderValue};
@@ -10,7 +11,8 @@ lazy_static!{
 }
 pub async fn login_with_xbox(user_hash:String,xsts_token:String)->Result<String,String>
 {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     headers.insert("Accept",HeaderValue::from_static("application/json"));
@@ -39,7 +41,8 @@ pub struct AccessToken{
 }
 pub async fn user_has_game(access_token:String)->Result<bool,String>
 {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("GET");
     let headers=request_builder.headers_mut().unwrap();
     headers.insert("Accept",HeaderValue::from_static("*/*"));
@@ -81,7 +84,8 @@ pub struct UserProfileResponse{
 }
 pub async fn get_user_profile(access_token:String)->Result<UserProfile,String>
 {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("GET");
     let headers=request_builder.headers_mut().unwrap();
     headers.insert("Accept",HeaderValue::from_static("*/*"));

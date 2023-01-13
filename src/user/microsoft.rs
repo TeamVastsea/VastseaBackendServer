@@ -1,3 +1,4 @@
+use hyper_tls::HttpsConnector;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use urlencoding::encode;
@@ -67,7 +68,8 @@ pub fn decode(input: String) -> Result<Vec<u8>,String> {
     return Ok(converted.unwrap());
 }
 pub async fn request_token(post_data: String)->Result<LoginResponse,String> {
-    let client=Client::new();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     shadow!(build);
