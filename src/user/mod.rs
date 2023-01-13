@@ -25,7 +25,7 @@ pub async fn register_request(req: HttpRequest, _req_body: String) -> impl Respo
         warn!("500/register->{}: {}", ip.to_string(), "missing args");
         return HttpResponse::InternalServerError().body("missing args");
     }
-    let arg=arg.nth(1).unwrap();
+    let arg=urlencoding::decode(arg.nth(1).unwrap()).unwrap();
     let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/register->{}: {}", ip.to_string(), e.to_string());
@@ -114,7 +114,7 @@ pub async fn bind_qq(req: HttpRequest, _req_body: String) -> impl Responder {
         warn!("500/bind_qq->{}: {}", ip.to_string(), "missing args");
         return HttpResponse::InternalServerError().body("missing args");
     }
-    let arg=arg.nth(1).unwrap();
+    let arg=urlencoding::decode(arg.nth(1).unwrap()).unwrap();
     let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/bind_qq->{}: {}", ip.to_string(), e.to_string());
@@ -165,7 +165,7 @@ pub async fn get_qq(req: HttpRequest, _req_body: String) -> impl Responder {
         warn!("500/get_qq->{}: {}", ip.to_string(), "missing args");
         return HttpResponse::InternalServerError().body("missing args");
     }
-    let arg=arg.nth(1).unwrap();
+    let arg=urlencoding::decode(arg.nth(1).unwrap()).unwrap();
     let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/get_qq->{}: {}", ip.to_string(), e.to_string());
