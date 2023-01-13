@@ -17,9 +17,16 @@ pub struct UserInfo {
 }
 
 #[get("/register")]
-pub async fn register_request(req: HttpRequest, req_body: String) -> impl Responder {
+pub async fn register_request(req: HttpRequest, _req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
-    let content = match serde_json::from_str::<Value>(&req_body) {
+    let uri=req.uri().to_string();
+    let mut arg=uri.split("?");
+    if arg.clone().count() <= 1 {
+        warn!("500/register->{}: {}", ip.to_string(), "missing args");
+        return HttpResponse::InternalServerError().body("missing args");
+    }
+    let arg=arg.nth(1).unwrap();
+    let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/register->{}: {}", ip.to_string(), e.to_string());
             return HttpResponse::InternalServerError().body(e.to_string());
@@ -99,9 +106,16 @@ pub async fn register_request(req: HttpRequest, req_body: String) -> impl Respon
 }
 
 #[get("/bind_qq")]
-pub async fn bind_qq(req: HttpRequest, req_body: String) -> impl Responder {
+pub async fn bind_qq(req: HttpRequest, _req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
-    let content = match serde_json::from_str::<Value>(&req_body) {
+    let uri=req.uri().to_string();
+    let mut arg=uri.split("?");
+    if arg.clone().count() <= 1 {
+        warn!("500/bind_qq->{}: {}", ip.to_string(), "missing args");
+        return HttpResponse::InternalServerError().body("missing args");
+    }
+    let arg=arg.nth(1).unwrap();
+    let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/bind_qq->{}: {}", ip.to_string(), e.to_string());
             return HttpResponse::InternalServerError().body(e.to_string());
@@ -143,9 +157,16 @@ pub async fn bind_qq(req: HttpRequest, req_body: String) -> impl Responder {
 }
 
 #[get("/get_qq")]
-pub async fn get_qq(req: HttpRequest, req_body: String) -> impl Responder {
+pub async fn get_qq(req: HttpRequest, _req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
-    let content = match serde_json::from_str::<Value>(&req_body) {
+    let uri=req.uri().to_string();
+    let mut arg=uri.split("?");
+    if arg.clone().count() <= 1 {
+        warn!("500/get_qq->{}: {}", ip.to_string(), "missing args");
+        return HttpResponse::InternalServerError().body("missing args");
+    }
+    let arg=arg.nth(1).unwrap();
+    let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/get_qq->{}: {}", ip.to_string(), e.to_string());
             return HttpResponse::InternalServerError().body(e.to_string());
