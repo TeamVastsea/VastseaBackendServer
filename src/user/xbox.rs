@@ -16,9 +16,9 @@ lazy_static!{
     pub static ref XBL:String=String::from("https://user.auth.xboxlive.com/user/authenticate");
     pub static ref XSTS:String=String::from("https://xsts.auth.xboxlive.com/xsts/authorize");
     pub static ref USERAGENT:String=String::from("Mozilla/5.0 (XboxReplay; XboxLiveAuth/3.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36");
-    pub static ref PPFT:Regex=Regex::new("sFTTag:'.*value=\"(.*)\"\\/>'").unwrap();
+    pub static ref PPFT:Regex=Regex::new("sFTTag:'.*value=\"(.*)\"/>'").unwrap();
     pub static ref URL_POST:Regex=Regex::new("urlPost:'(.+?(?=\'))").unwrap();
-    pub static ref CONFIRM:Regex=Regex::new("identity\\/confirm").unwrap();
+    pub static ref CONFIRM:Regex=Regex::new("identity/confirm").unwrap();
     pub static ref INVALID_ACCOUNT:Regex=Regex::new("(?i)Sign in to").unwrap();
     pub static ref TWO_FA:Regex=Regex::new("(?i)Help us protect your account").unwrap();
     pub static ref SIGN_IN_URL:String=AUTHORIZE.clone();
