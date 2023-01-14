@@ -1,4 +1,6 @@
 
+use std::str::FromStr;
+use chrono::Utc;
 use hyper_tls::HttpsConnector;
 use rand::Rng;
 use std::{collections::HashMap};
@@ -28,7 +30,7 @@ lazy_static!{
 pub struct PreAuthResponse {
     pub url_post: String,
     pub ppft: String,
-    pub cookies: String
+    pub cookies: HashMap<String,Vec<String>>
 }
 pub async fn pre_auth()->Result<PreAuthResponse,String> {
     let https=HttpsConnector::new();
@@ -74,7 +76,7 @@ pub async fn pre_auth()->Result<PreAuthResponse,String> {
     let url_post=data_str[url_post.start()..url_post.end()][9..].to_string();
     //debug!("{}",url_post.clone());
     let tmp=HeaderValue::from_static("");
-    Ok(PreAuthResponse { url_post: url_post.to_string(), ppft: ppft_.to_string(), cookies: resp.headers().get(hyper::header::SET_COOKIE).or_else(||Some(&tmp)).unwrap().to_str().unwrap().to_string() })
+    Ok(PreAuthResponse { url_post: url_post.to_string(), ppft: ppft_.to_string(), cookies: parse_set_cookie(resp.headers().get_all(hyper::header::SET_COOKIE).into_iter().map(|i|{i.to_str().unwrap().to_string()}).collect()) })
 }
 pub fn parse_query_string(query:String)->HashMap<String,String>
 {
@@ -85,6 +87,81 @@ pub fn parse_query_string(query:String)->HashMap<String,String>
     }
     return res;
 }
+pub fn parse_set_cookie(header_value:Vec<String>)->HashMap<String,Vec<String>>
+{
+    let mut cookies=HashMap::new();
+    for value in header_value {
+        let mut cookie=value.split(';');
+        let mut tmp=cookie.nth(0).unwrap().split('=');
+        let options:Vec<&str>=cookie.collect();
+        let cname=tmp.nth(0).unwrap();
+        let mut cvalue="".to_owned();
+        while tmp.clone().count()>0 {
+            cvalue+=(tmp.nth(0).unwrap().to_string()+"=").as_str();
+        }
+        cvalue=cvalue[0..cvalue.len()-1].to_string();
+        let mut is_expired=false;
+        for option in options{
+            let mut tmp2=option.trim().split('=');
+            if tmp2.clone().count()>=2 {
+                let mut tmp3=Vec::new();
+                tmp3.push(tmp2.nth(0).unwrap());
+                let mut combined="".to_owned();
+                while tmp2.clone().count()>0 {
+                    combined+=(tmp2.nth(0).unwrap().to_string()+"=").as_str();
+                }
+                combined=combined[0..combined.len()-1].to_string();
+                tmp3.push(combined.as_str());
+                let tmp2=tmp3;
+                let optName=tmp2[0].trim().to_lowercase();
+                let optValue=tmp2[1].trim().to_string();
+                match optName.as_str() {
+                    "expires"=>{
+                        if let Ok(expDate)=chrono::DateTime::parse_from_rfc2822(optValue.as_str())
+                        {
+                            if expDate < Utc::now() {
+                                is_expired=true;
+                            }
+                        }
+                    },
+                    "max-age"=>{
+                        if let Ok(expInt)=i32::from_str(optValue.as_str()) {
+                            if expInt<=0 {
+                                is_expired=true;
+                            }
+                        }
+                    },
+                    _=>{}
+                }
+            }
+            if is_expired {
+                break;
+            }
+        }
+        if !is_expired {
+            let mut cookies_tmp=cookies.clone();
+            let mut empty_vec=Vec::new();
+            let val=cookies_tmp.get_mut(cname).unwrap_or(&mut empty_vec);
+            val.push(cvalue);
+            cookies.insert(cname.to_string(), val.to_vec());
+        }
+    }
+    return cookies;
+}
+pub fn get_cookie_string(cookies:HashMap<String,Vec<String>>)->String
+{
+    let mut sb=string_builder::Builder::default();
+    for entry in cookies {
+        let mut val="".to_string();
+        for v in entry.1 {
+            val+=&(v+&",");
+        }
+        val=val[0..val.len()-1].to_string();
+        sb.append(format!("{}={}; ",entry.0,val));
+    }
+    let result=sb.string().unwrap();
+    return result[0..result.len()-2].to_string();
+}
 pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->Result<LoginResponse,String>
 {
     let https=HttpsConnector::new();
@@ -92,11 +169,12 @@ pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->
     let mut request_builder=Request::builder().method("POST");
     let headers=request_builder.headers_mut().unwrap();
     let ua=USERAGENT.clone();
-    headers.insert(hyper::header::COOKIE, HeaderValue::from_str(&pre_auth.cookies).unwrap());
+    headers.insert(hyper::header::COOKIE, HeaderValue::from_str(&get_cookie_string(pre_auth.cookies)).unwrap());
     headers.insert("User-Agent",HeaderValue::from_str(&ua).unwrap());
     headers.insert("Accept",HeaderValue::from_static("*/*"));
-    headers.insert("Connection", HeaderValue::from_static("close"));
+    headers.insert("Connection", HeaderValue::from_static("keep-alive"));
     headers.insert("Content-Type",HeaderValue::from_static("application/x-www-form-urlencoded"));
+    //debug!("{:?}",headers);
     let post_data="i13=0&login=".to_owned() + &encode(&email).into_owned()
     + "&loginfmt=" + &encode(&email).into_owned()
     + "&type=11&LoginOptions=3&lrt=&lrtPartition=&hisRegion=&hisScaleUnit=&passwd=" + &encode(&password).into_owned()
