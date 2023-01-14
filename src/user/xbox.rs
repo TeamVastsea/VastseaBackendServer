@@ -9,7 +9,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use simple_log::debug;
 use urlencoding::{encode, decode};
-use hyper::{Body, Client, Request, body::{HttpBody, self}, http::HeaderValue};
+use hyper::{Body, Client, Request, body, http::HeaderValue};
 use lazy_static::lazy_static;
 use serde_json::{from_str};
 
@@ -222,7 +222,11 @@ pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->
         return Err(response2.err().unwrap().to_string());
     }
     let mut resp2=response2.unwrap();
-    let data2=String::from_utf8(resp2.body_mut().data().await.unwrap().unwrap().to_vec());
+    let bytes2=body::to_bytes(resp2.body_mut()).await;
+    if let Err(err)=bytes2 {
+        return Err(err.to_string());
+    }
+    let data2=String::from_utf8(bytes2.unwrap().to_vec());
     if data2.is_err()
     {
         return Err(data2.err().unwrap().to_string());
