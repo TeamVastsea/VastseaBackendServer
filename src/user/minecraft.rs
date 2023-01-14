@@ -101,7 +101,7 @@ pub async fn get_user_profile(access_token:String)->Result<UserProfile,String>
     headers.insert("Accept",HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Authorization",HeaderValue::from_str(format!("Bearer {}",access_token).as_str()).unwrap());
-    let response=client.request(request_builder.uri(OWNERSHIP.clone()).body(Body::empty()).unwrap()).await;
+    let response=client.request(request_builder.uri(PROFILE.clone()).body(Body::empty()).unwrap()).await;
     if response.is_err()
     {
         return Err(response.err().unwrap().to_string());
