@@ -1,5 +1,6 @@
 
 use hyper_tls::HttpsConnector;
+use rand::Rng;
 use std::{collections::HashMap};
 
 use regex::Regex;
@@ -96,10 +97,12 @@ pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->
     headers.insert("Accept",HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type",HeaderValue::from_static("application/x-www-form-urlencoded"));
-    let post_data="login=".to_owned() + &encode(&email).into_owned()
+    let post_data="i13=0&login=".to_owned() + &encode(&email).into_owned()
     + "&loginfmt=" + &encode(&email).into_owned()
-    + "&passwd=" + &encode(&password).into_owned()
-    + "&PPFT=" + &encode(&pre_auth.ppft).into_owned();
+    + "&type=11&LoginOptions=3&lrt=&lrtPartition=&hisRegion=&hisScaleUnit=&passwd=" + &encode(&password).into_owned()
+    + "&ps=2&psRNGCDefaultType=&psRNGCEntropy=&psRNGCSLK=&canary=&ctx=&hpgrequestid=&PPFT=" + &encode(&pre_auth.ppft).into_owned()
+    + "&PPSX="+&"PassportRN"[0..rand::thread_rng().gen_range::<usize,_>(2..=10)]
+    + "&NewUser=1&FoundMSAs=&fspost=0&i21=0&CookieDisclosure=0&IsFidoSupported=1&isSignupPost=0&isRecoveryAttemptPost=0&i19="+&rand::thread_rng().gen_range::<u32,_>(1000..=9999).to_string();
     let response=client.request(request_builder.uri(pre_auth.url_post).body(Body::from(post_data)).unwrap()).await;
     if response.is_err()
     {
