@@ -61,11 +61,17 @@ pub async fn pre_auth()->Result<PreAuthResponse,String> {
         return Err("Fail to extract PPFT".to_string());
     }
     let ppft_=&ppft_.unwrap()[1];
-    let mut url_post=URL_POST.find_iter(data_str.as_str().as_bytes());
-    if url_post.by_ref().count()<=1 {
+    let url_post=URL_POST.find(data_str.as_str().as_bytes());
+    if url_post.is_err() {
+        return Err("Fail to extract urlPost\n".to_owned()+&url_post.err().unwrap().to_string());
+    }
+    let url_post=url_post.unwrap();
+    if let None=url_post {
         return Err("Fail to extract urlPost".to_string());
     }
-    let url_post=String::from_utf8((url_post.into_iter().nth(1).unwrap().unwrap().as_bytes()).to_vec()).unwrap();
+    let url_post=url_post.unwrap();
+    let url_post=data_str[url_post.start()..url_post.end()][9..].to_string();
+    //debug!("{}",url_post.clone());
     let tmp=HeaderValue::from_static("");
     Ok(PreAuthResponse { url_post: url_post.to_string(), ppft: ppft_.to_string(), cookies: resp.headers().get(hyper::header::SET_COOKIE).or_else(||Some(&tmp)).unwrap().to_str().unwrap().to_string() })
 }
