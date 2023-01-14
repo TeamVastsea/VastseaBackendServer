@@ -332,7 +332,7 @@ pub async fn xsts_authenticate(xbl_response:AuthenticateResponse)->Result<Authen
     + "\"RelyingParty\": \"rp://api.minecraftservices.com/\","
     + "\"TokenType\": \"JWT\""
     + "}";
-    let response=client.request(request_builder.uri(XBL.clone()).body(Body::from(post_data)).unwrap()).await;
+    let response=client.request(request_builder.uri(XSTS.clone()).body(Body::from(post_data)).unwrap()).await;
     if response.is_err()
     {
         return Err(response.err().unwrap().to_string());
