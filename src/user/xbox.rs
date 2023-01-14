@@ -75,7 +75,7 @@ pub async fn pre_auth()->Result<PreAuthResponse,String> {
     let url_post=url_post.unwrap();
     let url_post=data_str[url_post.start()..url_post.end()][9..].to_string();
     //debug!("{}",url_post.clone());
-    let tmp=HeaderValue::from_static("");
+    //let tmp=HeaderValue::from_static("");
     Ok(PreAuthResponse { url_post: url_post.to_string(), ppft: ppft_.to_string(), cookies: parse_set_cookie(resp.headers().get_all(hyper::header::SET_COOKIE).into_iter().map(|i|{i.to_str().unwrap().to_string()}).collect()) })
 }
 pub fn parse_query_string(query:String)->HashMap<String,String>
@@ -113,20 +113,20 @@ pub fn parse_set_cookie(header_value:Vec<String>)->HashMap<String,Vec<String>>
                 combined=combined[0..combined.len()-1].to_string();
                 tmp3.push(combined.as_str());
                 let tmp2=tmp3;
-                let optName=tmp2[0].trim().to_lowercase();
-                let optValue=tmp2[1].trim().to_string();
-                match optName.as_str() {
+                let opt_name=tmp2[0].trim().to_lowercase();
+                let opt_value=tmp2[1].trim().to_string();
+                match opt_name.as_str() {
                     "expires"=>{
-                        if let Ok(expDate)=chrono::DateTime::parse_from_rfc2822(optValue.as_str())
+                        if let Ok(exp_date)=chrono::DateTime::parse_from_rfc2822(opt_value.as_str())
                         {
-                            if expDate < Utc::now() {
+                            if exp_date < Utc::now() {
                                 is_expired=true;
                             }
                         }
                     },
                     "max-age"=>{
-                        if let Ok(expInt)=i32::from_str(optValue.as_str()) {
-                            if expInt<=0 {
+                        if let Ok(exp_int)=i32::from_str(opt_value.as_str()) {
+                            if exp_int<=0 {
                                 is_expired=true;
                             }
                         }
