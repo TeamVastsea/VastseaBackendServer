@@ -1,4 +1,3 @@
-
 use mongodb::bson::{doc, Document};
 use mongodb::{Collection};
 use crate::{MONGODB, user};
@@ -12,7 +11,7 @@ impl UserInfo {
     }
     pub async fn find_uuid(uuid: String) -> Result<UserInfo, String> {
         let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
-        let res=collection.find_one(doc! {"uuid": uuid}, None).await.unwrap();
+        let res = collection.find_one(doc! {"uuid": uuid}, None).await.unwrap();
         res.ok_or(String::from("User not found"))
     }
 }
@@ -31,8 +30,8 @@ pub async fn register(uuid: String) -> Result<UserInfo, String> {
     scrypt::scrypt(password.as_bytes(), salt.as_bytes(), &Params::recommended(), &mut output).unwrap();
     */
     let user = UserInfo {
-        uuid: uuid,
-        bind_qq: -1
+        uuid,
+        bind_qq: -1,
     };
 
     user.register().await.unwrap();

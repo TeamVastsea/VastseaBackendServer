@@ -1,8 +1,11 @@
-use actix_web::{get, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, post, HttpRequest, HttpResponse, Responder};
 use mongodb::bson::{doc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use simple_log::{info, warn};
+use simple_log::{debug, info, warn};
+use crate::user::microsoft::{LoginResponse, request_access_token};
+use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
+use crate::user::xbox::{xbl_authenticate, xsts_authenticate};
 
 pub mod register;
 pub mod bind;
@@ -16,105 +19,163 @@ pub struct UserInfo {
     pub uuid: String,
 }
 
-#[get("/register")]
-pub async fn register_request(req: HttpRequest, _req_body: String) -> impl Responder {
+#[deprecated(note = "Please use code instead.")]
+#[post("/password")]
+async fn password_login(req: HttpRequest, req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
-    let uri=req.uri().to_string();
-    let mut arg=uri.split("?");
-    if arg.clone().count() <= 1 {
-        warn!("500/register->{}: {}", ip.to_string(), "missing args");
-        return HttpResponse::InternalServerError().body("missing args");
-    }
-    let arg=urlencoding::decode(arg.nth(1).unwrap()).unwrap();
-    let content = match serde_json::from_str::<Value>(&arg) {
+    let content = match serde_json::from_str::<Value>(req_body.as_str()) {
         Err(e) => {
             warn!("500/register->{}: {}", ip.to_string(), e.to_string());
             return HttpResponse::InternalServerError().body(e.to_string());
         }
         Ok(v) => v,
     };
-    let username = match content["username"].as_str() {
-        Some(v) => v,
+
+    let username = match content.get("username") {
+        Some(v) => v.to_string(),
         None => {
             warn!("500/register->{}: Username missing", ip.to_string());
             return HttpResponse::InternalServerError().body("Username missing");
         }
     };
-    let password = match content["password"].as_str() {
-        Some(v) => v,
+    let password = match content.get("password") {
+        Some(v) => v.to_string(),
         None => {
             warn!("500/register->{}: Password missing", ip.to_string());
             return HttpResponse::InternalServerError().body("Password missing");
         }
     };
-    let pre=crate::user::xbox::pre_auth().await;
-    if let Err(err) = pre {
-        warn!("500/register->{}: Preauth failed\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("Preauth failed\n".to_owned()+&err);
-    }
-    let pre=pre.unwrap();
-    let login_response=crate::user::xbox::user_login(username.to_string(), password.to_string(), pre).await;
-    if let Err(err) = login_response {
-        warn!("500/register->{}: Xbox Live Login failed\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("Xbox Live Login failed\n".to_owned()+&err);
-    }
-    let login_response=login_response.unwrap();
-    let xbl=crate::user::xbox::xbl_authenticate(login_response, false).await;
-    if let Err(err) = xbl {
-        warn!("500/register->{}: XBLAuth failed\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("XBLAuth failed\n".to_owned()+&err);
-    }
-    let xbl=xbl.unwrap();
-    let xsts=crate::user::xbox::xsts_authenticate(xbl).await;
-    if let Err(err) = xsts {
-        warn!("500/register->{}: XSTSAuth failed\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("XSTSAuth failed\n".to_owned()+&err);
-    }
-    let xsts=xsts.unwrap();
-    let access_token=crate::user::minecraft::login_with_xbox(xsts.user_hash, xsts.token).await;
-    if let Err(err) = access_token {
-        warn!("500/register->{}: Get AccessToken failed\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("Get AccessToken failed\n".to_owned()+&err);
-    }
-    let access_token=access_token.unwrap();
-    let has_game=crate::user::minecraft::user_has_game(access_token.clone()).await;
-    if let Err(err) = has_game {
-        warn!("500/register->{}: Get Game Status failed\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("Get Game Status failed\n".to_owned()+&err);
-    }
-    let has_game = has_game.unwrap();
+    let pre = match xbox::pre_auth().await {
+        Err(e) => {
+            warn!("500/register->{}: Pre-auth failed\n{}", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body("Pre-auth failed\n".to_owned() + &e);
+        }
+        Ok(a) => a,
+    };
+    let login_response = match xbox::user_login(username.to_string(), password.to_string(), pre).await {
+        Err(e) => {
+            warn!("500/register->{}: Xbox Live Login failed\n{}", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body("Xbox Live Login failed\n".to_owned() + &e);
+        }
+        Ok(a) => a,
+    };
+    let xbl = match xbl_authenticate(login_response, false).await {
+        Err(e) => {
+            warn!("500/register->{}: XBLAuth failed\n{}", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body("XBLAuth failed\n".to_owned() + &e);
+        }
+        Ok(a) => a
+    };
+    let xsts = match xsts_authenticate(xbl).await {
+        Err(e) => {
+            warn!("500/register->{}: XSTSAuth failed\n{}", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body("XSTSAuth failed\n".to_owned() + &e);
+        }
+        Ok(a) => a,
+    };
+    let access_token = match login_with_xbox(xsts.user_hash, xsts.token).await {
+        Err(err) => {
+            warn!("500/register->{}: Get AccessToken failed\n{}", ip.to_string(),err);
+            return HttpResponse::InternalServerError().body("Get AccessToken failed\n".to_owned() + &err);
+        }
+        Ok(a) => a,
+    };
+    let has_game = match user_has_game(access_token.clone()).await {
+        Err(err) => {
+            warn!("500/register->{}: Get Game Status failed\n{}", ip.to_string(),err);
+            return HttpResponse::InternalServerError().body("Get Game Status failed\n".to_owned() + &err);
+        }
+        Ok(a) => a,
+    };
     if !has_game {
         warn!("500/register->{}: Not have game", ip.to_string());
-        return HttpResponse::InternalServerError().body("Not have game");
+        return HttpResponse::Unauthorized().body("Not have game");
     }
-    let profile=crate::user::minecraft::get_user_profile(access_token).await;
-    if let Err(err) = profile {
-        warn!("500/register->{}: Could not get profile\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned()+&err);
-    }
-    let profile=profile.unwrap();
-    match register::register(profile.uuid).await {
+    let profile = match minecraft::get_user_profile(access_token).await {
+        Err(err) => {
+            warn!("500/register->{}: Could not get profile\n{}", ip.to_string(),err);
+            return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned() + &err);
+        }
+        Ok(a) => a,
+    };
+    return match register::register(profile.uuid).await {
         Err(e) => {
             warn!("500/register->{}: {}", ip.to_string(), e.to_string());
-            return HttpResponse::InternalServerError().body(e);
+            HttpResponse::InternalServerError().body(e)
         }
-        Ok(_)=>{
+        Ok(_) => {
             info!("200/register->{}", ip.to_string());
-            return HttpResponse::Ok().into();
+            HttpResponse::Ok().into()
         }
+    };
+}
+
+#[post("/code")]
+pub async fn code_login(req: HttpRequest, req_body: String) -> impl Responder {
+    let code = req_body;
+    let ip = req.peer_addr().unwrap().ip();
+    let access_token = match request_access_token(code.to_string()).await {
+        Ok(a) => a,
+        Err(e) => {
+            warn!("500/code->{}: Cannot get access token ({})", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body(format!("Cannot get access token ({})", e));
+        }
+    };
+    let xbl_response = match xbl_authenticate(access_token, true).await {
+        Ok(a) => a,
+        Err(e) => {
+            warn!("500/code->{}: Cannot get xbl ({})", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body(format!("Cannot get xbl ({})", e));
+        }
+    };
+    let xsts_response = match xsts_authenticate(xbl_response).await {
+        Ok(a) => a,
+        Err(e) => {
+            warn!("500/code->{}: Cannot get xsts ({})", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body(format!("Cannot get xsts ({})", e));
+        }
+    };
+    let xbox_token = match login_with_xbox(xsts_response.user_hash, xsts_response.token).await {
+        Ok(a) => a,
+        Err(e) => {
+            warn!("500/code->{}: Cannot login xbox ({})", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body(format!("Cannot login xbox ({})", e));
+        }
+    };
+    let has_game = match user_has_game(xbox_token.clone()).await {
+        Ok(a) => a,
+        Err(e) => {
+            warn!("500/code->{}: Cannot examine whether has game ({})", ip.to_string(),e);
+            return HttpResponse::InternalServerError().body(format!("Cannot examine whether has game ({})", e));
+        }
+    };
+    if !has_game {
+        warn!("500/code->{}: User does not own Minecraft", ip.to_string());
+        return HttpResponse::Unauthorized().body("User does not own Minecraft");
     }
+    return match get_user_profile(xbox_token.clone()).await {
+        Ok(a) => {
+            let profile = format!("{{uuid: {}, username: {}}}", a.uuid, a.user_name);
+            info!("200/code->{}: {}", ip.to_string(),profile);
+            HttpResponse::Ok().body(profile)
+        }
+        Err(e) => {
+            warn!("500/code->{}: Cannot get profile ({})", ip.to_string(),e);
+            HttpResponse::InternalServerError().body(format!("Cannot get profile ({})", e))
+        }
+    };
 }
 
 #[get("/bind_qq")]
 pub async fn bind_qq(req: HttpRequest, _req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
-    let uri=req.uri().to_string();
-    let mut arg=uri.split("?");
+    let uri = req.uri().to_string();
+    let mut arg = uri.split("?");
     if arg.clone().count() <= 1 {
         warn!("500/bind_qq->{}: {}", ip.to_string(), "missing args");
         return HttpResponse::InternalServerError().body("missing args");
     }
-    let arg=urlencoding::decode(arg.nth(1).unwrap()).unwrap();
+    let arg = urlencoding::decode(arg.nth(1).unwrap()).unwrap();
     let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/bind_qq->{}: {}", ip.to_string(), e.to_string());
@@ -136,36 +197,36 @@ pub async fn bind_qq(req: HttpRequest, _req_body: String) -> impl Responder {
             return HttpResponse::InternalServerError().body("QQ missing");
         }
     };
-    let profile=crate::user::minecraft::get_user_profile(token.to_string()).await;
+    let profile = minecraft::get_user_profile(token.to_string()).await;
     if let Err(err) = profile {
         warn!("500/bind_qq->{}: Could not get profile\n{}", ip.to_string(),err);
-        return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned()+&err);
+        return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned() + &err);
     }
-    let profile=profile.unwrap();
-    match bind::bind_qq(profile.uuid, qq).await {
-        Ok(_) => { return HttpResponse::Ok().into(); }
+    let profile = profile.unwrap();
+    return match bind::bind_qq(profile.uuid, qq).await {
+        Ok(_) => { HttpResponse::Ok().into() }
         Err(e) => {
             if e != "Already Bound" {
                 warn!("500/bind_qq->{}: {}", ip.to_string(), e);
-                return HttpResponse::InternalServerError().body(e);
+                HttpResponse::InternalServerError().body(e)
             } else {
                 warn!("208/bind_qq->{}: Already bound", ip.to_string());
-                return HttpResponse::AlreadyReported().body(e);
+                HttpResponse::AlreadyReported().body(e)
             }
         }
-    }
+    };
 }
 
 #[get("/get_qq")]
 pub async fn get_qq(req: HttpRequest, _req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
-    let uri=req.uri().to_string();
-    let mut arg=uri.split("?");
+    let uri = req.uri().to_string();
+    let mut arg = uri.split("?");
     if arg.clone().count() <= 1 {
         warn!("500/get_qq->{}: {}", ip.to_string(), "missing args");
         return HttpResponse::InternalServerError().body("missing args");
     }
-    let arg=urlencoding::decode(arg.nth(1).unwrap()).unwrap();
+    let arg = urlencoding::decode(arg.nth(1).unwrap()).unwrap();
     let content = match serde_json::from_str::<Value>(&arg) {
         Err(e) => {
             warn!("500/get_qq->{}: {}", ip.to_string(), e.to_string());
@@ -186,11 +247,11 @@ pub async fn get_qq(req: HttpRequest, _req_body: String) -> impl Responder {
         return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned()+&err);
     }
     let profile=profile.unwrap();*/
-    match UserInfo::find_uuid(/*profile.*/uuid.to_string()).await {
-        Ok(p) => { return HttpResponse::Ok().body(p.bind_qq.to_string()).into(); }
+    return match UserInfo::find_uuid(/*profile.*/uuid.to_string()).await {
+        Ok(p) => { HttpResponse::Ok().body(p.bind_qq.to_string()).into() }
         Err(e) => {
-                warn!("500/get_qq->{}: {}", ip.to_string(), e);
-                return HttpResponse::InternalServerError().body(e);
+            warn!("500/get_qq->{}: {}", ip.to_string(), e);
+            HttpResponse::InternalServerError().body(e)
         }
-    }
+    };
 }

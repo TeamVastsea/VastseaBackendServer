@@ -57,9 +57,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(echo)
-            .service(user::register_request)
             .service(user::bind_qq)
             .service(user::get_qq)
+            .service(user::code_login)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }
