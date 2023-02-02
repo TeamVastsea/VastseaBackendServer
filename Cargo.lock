@@ -2141,6 +2141,7 @@ dependencies = [
  "simple-log",
  "string-builder",
  "totp-rs",
+ "url_encoded_data",
  "urlencoding",
 ]
 
@@ -2941,6 +2942,16 @@ dependencies = [
  "form_urlencoded",
  "idna 0.3.0",
  "percent-encoding",
+]
+
+[[package]]
+name = "url_encoded_data"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e1fdf35657b22e2c3b485cfb5ab66d5aa9dd5b0dce9902a314a830e2ea05972"
+dependencies = [
+ "anyhow",
+ "url",
 ]
 
 [[package]]

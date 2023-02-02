@@ -29,6 +29,7 @@ regex = "1.7.1"
 hyper-tls = "0.5.0"
 pcre2 = "0.2.3"
 string-builder = "0.2.0"
+url_encoded_data = "0.6.1"
 
 [build-dependencies]
 embed-resource = "1.8.0"

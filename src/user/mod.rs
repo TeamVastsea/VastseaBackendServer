@@ -1,9 +1,11 @@
+use std::borrow::Cow;
 use actix_web::{get, post, HttpRequest, HttpResponse, Responder};
 use mongodb::bson::{doc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use simple_log::{info, warn};
-use crate::user::microsoft::request_access_token;
+use url_encoded_data::UrlEncodedData;
+use crate::user::microsoft::{LoginResponse, request_access_token};
 use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
 use crate::user::xbox::{xbl_authenticate, xsts_authenticate};
 
@@ -109,10 +111,28 @@ async fn password_login(req: HttpRequest, req_body: String) -> impl Responder {
     };
 }
 
-#[post("/code")]
-pub async fn code_login(req: HttpRequest, req_body: String) -> impl Responder {
-    let code = req_body;
+#[post("/login_code")]
+pub async fn code_login(req: HttpRequest) -> impl Responder {
+    let uri = req.uri().to_string();
+    let uri_encoded = UrlEncodedData::from(uri.as_str());
     let ip = req.peer_addr().unwrap().ip();
+
+    if !uri_encoded.keys().contains(&"code") {
+        warn!("400/code->{}: Missing 'code'", ip.to_string());
+        return HttpResponse::BadRequest().body("Missing 'token'");
+    }
+
+    let code = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("code")).unwrap().to_string();
+    let need_token = match uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("token")) {
+        None => false,
+        Some(a) => {
+            if a.to_string() == "true" {
+                true
+            } else {
+                false
+            }
+        }
+    };
     let access_token = match request_access_token(code.to_string()).await {
         Ok(a) => a,
         Err(e) => {
@@ -149,14 +169,17 @@ pub async fn code_login(req: HttpRequest, req_body: String) -> impl Responder {
         }
     };
     if !has_game {
-        warn!("500/code->{}: User does not own Minecraft", ip.to_string());
+        warn!("401/code->{}: User does not own Minecraft", ip.to_string());
         return HttpResponse::Unauthorized().body("User does not own Minecraft");
     }
     return match get_user_profile(xbox_token.clone()).await {
-        Ok(a) => {
-            let profile = format!("{{uuid: {}, username: {}}}", a.uuid, a.user_name);
-            info!("200/code->{}: {}", ip.to_string(),profile);
-            HttpResponse::Ok().body(profile)
+        Ok(mut a) => {
+            if need_token {
+                a.token = Some("Unimplemented.".to_string());
+            }
+
+            info!("200/code->{}: {}", ip.to_string(), serde_json::to_string(&a).unwrap());
+            HttpResponse::Ok().body(serde_json::to_string(&a).unwrap())
         }
         Err(e) => {
             warn!("500/code->{}: Cannot get profile ({})", ip.to_string(),e);

@@ -94,7 +94,9 @@ pub async fn request_token(post_data: String) -> Result<LoginResponse, String> {
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };
-    return if login_response.error.is_some() {
+
+
+    if login_response.error.is_some() {
         Err(login_response.error_description.unwrap())
     } else {
         let payload = get_payload(login_response.clone().id_token.unwrap());
@@ -103,5 +105,5 @@ pub async fn request_token(post_data: String) -> Result<LoginResponse, String> {
             return Err(json_payload.err().unwrap().to_string());
         }
         Ok(LoginResponse { email: Some(json_payload.unwrap().email), ..login_response })
-    };
+    }
 }

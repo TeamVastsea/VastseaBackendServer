@@ -26,6 +26,8 @@ pub struct Item {}
 pub struct UserProfile {
     pub uuid: String,
     pub user_name: String,
+    pub qq: Option<i64>,
+    pub token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -108,5 +110,5 @@ pub async fn get_user_profile(access_token: String) -> Result<UserProfile, Strin
         Ok(a) => a,
     };
     let json: UserProfileResponse = from_str(data.as_str()).unwrap();
-    return Ok(UserProfile { uuid: json.id, user_name: json.name });
+    return Ok(UserProfile { uuid: json.id, user_name: json.name, qq: None, token: None });
 }
