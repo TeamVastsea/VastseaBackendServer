@@ -2,8 +2,8 @@ use actix_web::{get, post, HttpRequest, HttpResponse, Responder};
 use mongodb::bson::{doc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use simple_log::{debug, info, warn};
-use crate::user::microsoft::{LoginResponse, request_access_token};
+use simple_log::{info, warn};
+use crate::user::microsoft::request_access_token;
 use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
 use crate::user::xbox::{xbl_authenticate, xsts_authenticate};
 
@@ -19,7 +19,6 @@ pub struct UserInfo {
     pub uuid: String,
 }
 
-#[deprecated(note = "Please use code instead.")]
 #[post("/password")]
 async fn password_login(req: HttpRequest, req_body: String) -> impl Responder {
     let ip = req.peer_addr().unwrap().ip();
@@ -32,14 +31,14 @@ async fn password_login(req: HttpRequest, req_body: String) -> impl Responder {
     };
 
     let username = match content.get("username") {
-        Some(v) => v.to_string(),
+        Some(v) => v.as_str().unwrap().to_string(),
         None => {
             warn!("500/register->{}: Username missing", ip.to_string());
             return HttpResponse::InternalServerError().body("Username missing");
         }
     };
     let password = match content.get("password") {
-        Some(v) => v.to_string(),
+        Some(v) => v.as_str().unwrap().to_string(),
         None => {
             warn!("500/register->{}: Password missing", ip.to_string());
             return HttpResponse::InternalServerError().body("Password missing");

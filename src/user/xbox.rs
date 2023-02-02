@@ -157,74 +157,96 @@ pub fn get_cookie_string(cookies: HashMap<String, Vec<String>>) -> String
     return result[0..result.len() - 2].to_string();
 }
 
-pub async fn user_login(email: String, password: String, pre_auth: PreAuthResponse) -> Result<LoginResponse, String>
+pub async fn user_login(email:String,password:String,pre_auth:PreAuthResponse)->Result<LoginResponse,String>
 {
-    let https = HttpsConnector::new();
-    let client = Client::builder().build::<_, Body>(https);
-    let mut request_builder = Request::builder().method("POST");
-    let headers = request_builder.headers_mut().unwrap();
-    let ua = USERAGENT.clone();
+    let https=HttpsConnector::new();
+    let client=Client::builder().build::<_,hyper::Body>(https);
+    let mut request_builder=Request::builder().method("POST");
+    let headers=request_builder.headers_mut().unwrap();
+    let ua=USERAGENT.clone();
     headers.insert(hyper::header::COOKIE, HeaderValue::from_str(&get_cookie_string(pre_auth.cookies)).unwrap());
-    headers.insert("User-Agent", HeaderValue::from_str(&ua).unwrap());
-    headers.insert("Accept", HeaderValue::from_static("*/*"));
+    headers.insert("User-Agent",HeaderValue::from_str(&ua).unwrap());
+    headers.insert("Accept",HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("keep-alive"));
-    headers.insert("Content-Type", HeaderValue::from_static("application/x-www-form-urlencoded"));
-    let post_data = format!(r#"i13=0&login={0}&loginfmt={0}&type=11&LoginOptions=3&lrt=&lrtPartition=&hisRegion=&hisScaleUnit=&passwd={1}&ps=2&psRNGCDefaultType=&psRNGCEntropy=&psRNGCSLK=&canary=&ctx=&hpgrequestid=&PPFT={2}&PPSX={3}&NewUser=1&FoundMSAs=&fspost=0&i21=0&CookieDisclosure=0&IsFidoSupported=1&isSignupPost=0&isRecoveryAttemptPost=0&i19={4}"#, &encode(&email), &encode(&password), &"PassportRN"[0..rand::thread_rng().gen_range::<usize, _>(2..=10)], &encode(&pre_auth.ppft), &rand::thread_rng().gen_range::<u32, _>(1000..=9999));
-    let mut response = match client.request(request_builder.uri(pre_auth.url_post).body(Body::from(post_data)).unwrap()).await {
-        Err(e) => { return Err(e.to_string()); }
-        Ok(a) => a,
-    };
-    let all_data = match body::to_bytes(response.body_mut()).await {
-        Err(e) => { return Err(e.to_string()); }
-        Ok(a) => a.to_vec(),
-    };
-    let data = match String::from_utf8(all_data) {
-        Err(e) => { return Err(e.to_string()); }
-        Ok(a) => a,
-    };
-    return if response.status().as_u16() >= 300 && response.status().as_u16() <= 399
+    headers.insert("Content-Type",HeaderValue::from_static("application/x-www-form-urlencoded"));
+    //debug!("{:?}",headers);
+    let post_data="i13=0&login=".to_owned() + &encode(&email).into_owned()
+    + "&loginfmt=" + &encode(&email).into_owned()
+    + "&type=11&LoginOptions=3&lrt=&lrtPartition=&hisRegion=&hisScaleUnit=&passwd=" + &encode(&password).into_owned()
+    + "&ps=2&psRNGCDefaultType=&psRNGCEntropy=&psRNGCSLK=&canary=&ctx=&hpgrequestid=&PPFT=" + &encode(&pre_auth.ppft).into_owned()
+    + "&PPSX="+&"PassportRN"[0..rand::thread_rng().gen_range::<usize,_>(2..=10)]
+    + "&NewUser=1&FoundMSAs=&fspost=0&i21=0&CookieDisclosure=0&IsFidoSupported=1&isSignupPost=0&isRecoveryAttemptPost=0&i19="+&rand::thread_rng().gen_range::<u32,_>(1000..=9999).to_string();
+    let response=client.request(request_builder.uri(pre_auth.url_post).body(Body::from(post_data)).unwrap()).await;
+    if response.is_err()
     {
-        let url = match response.headers().get("Location") {
-            None => { return Err("Connot get url".to_string()); }
-            Some(a) => a.to_str().unwrap().to_string(),
-        };
-        let hash = &url.split('#').nth(1);
-        let https2 = HttpsConnector::new();
-        let client2 = Client::builder().build::<_, Body>(https2);
-        let mut request_builder2 = Request::builder().method("GET");
-        let headers2 = request_builder2.headers_mut().unwrap();
-        let ua2 = USERAGENT.clone();
-        headers2.insert("User-Agent", HeaderValue::from_str(&ua2).unwrap());
-        headers2.insert("Accept", HeaderValue::from_static("*/*"));
-        headers2.insert("Connection", HeaderValue::from_static("close"));
-        let mut response2 = match client2.request(request_builder2.uri(&url).body(Body::empty()).unwrap()).await {
-            Err(e) => { return Err(e.to_string()); }
-            Ok(a) => a,
-        };
-        let bytes2 = match body::to_bytes(response2.body_mut()).await {
-            Err(e) => { return Err(e.to_string()); }
-            Ok(a) => a.to_vec(),
-        };
-        if let Err(e) = String::from_utf8(bytes2) {
-            return Err(e.to_string());
-        };
-        if response2.status().as_u16() != 200 {
-            return Err("Authentication failed".to_string());
+        return Err(response.err().unwrap().to_string());
+    }
+    let mut resp=response.unwrap();
+    let all_data=body::to_bytes(resp.body_mut()).await;
+    if let Err(err)=all_data {
+        return Err("cannot read response\n".to_owned()+&err.to_string());
+    }
+    let all_data=all_data.unwrap().to_vec();
+    let data=String::from_utf8(all_data);
+    if data.is_err()
+    {
+        return Err(data.err().unwrap().to_string());
+    }
+    let data_unwrap=data.unwrap();
+    debug!("{}",data_unwrap);
+    if resp.status().as_u16()>=300 && resp.status().as_u16()<=399
+    {
+        let url=resp.headers().get("Location");
+        if url.is_none() {
+            return Err("cannot get url".to_string());
         }
-        if hash.is_none() || hash.unwrap().is_empty() {
-            return Err("Cannot extract access token".to_string());
+        let url=url.unwrap().to_str().unwrap().to_string();
+        let url2=url.clone();
+        let hash=url2.split('#').nth(1);
+        let https2=HttpsConnector::new();
+    let client2=Client::builder().build::<_,hyper::Body>(https2);
+    let mut request_builder2=Request::builder().method("GET");
+    let headers2=request_builder2.headers_mut().unwrap();
+    let ua2=USERAGENT.clone();
+    headers2.insert("User-Agent",HeaderValue::from_str(&ua2).unwrap());
+    headers2.insert("Accept",HeaderValue::from_static("*/*"));
+    headers2.insert("Connection", HeaderValue::from_static("close"));
+    let response2=client2.request(request_builder2.uri(url).body(Body::empty()).unwrap()).await;
+    if response2.is_err()
+    {
+        return Err(response2.err().unwrap().to_string());
+    }
+    let mut resp2=response2.unwrap();
+    let bytes2=body::to_bytes(resp2.body_mut()).await;
+    if let Err(err)=bytes2 {
+        return Err(err.to_string());
+    }
+    let data2=String::from_utf8(bytes2.unwrap().to_vec());
+    if data2.is_err()
+    {
+        return Err(data2.err().unwrap().to_string());
+    }
+    if resp2.status().as_u16()!=200
+    {
+        return Err("Authentication failed".to_string());
+    }
+    if hash.is_none()||hash.unwrap().is_empty()
+    {
+        return Err("Cannot extract access token".to_string());
+    }
+    let dict=parse_query_string(hash.unwrap().to_string());
+    return Ok(LoginResponse{email:Some(email),access_token:Some(dict["access_token"].clone()),refresh_token:Some(dict["refresh_token"].clone()),expires_in:Some(dict["expires_in"].parse().unwrap()), error: None, error_description: None, id_token: None });
+    }else{
+        if TWO_FA.is_match(&data_unwrap.as_str())
+        {
+            return Err("2FA enabled but not supported yet. Use browser sign-in method or try to disable 2FA in Microsoft account settings".to_string());
+        }else if INVALID_ACCOUNT.is_match(&data_unwrap.as_str())
+        {
+            return Err("Invalid credentials. Check your credentials".to_string());
+        }else{
+            return Err("Unexpected response. Check your credentials. Response code: ".to_owned()+&resp.status().as_u16().to_string());
         }
-        let dict = parse_query_string(hash.unwrap().to_string());
-        Ok(LoginResponse { email: Some(email), access_token: Some(dict["access_token"].clone()), refresh_token: Some(dict["refresh_token"].clone()), expires_in: Some(dict["expires_in"].parse().unwrap()), error: None, error_description: None, id_token: None })
-    } else {
-        if TWO_FA.is_match(&data.as_str()) {
-            Err("2FA enabled but not supported yet. Use browser sign-in method or try to disable 2FA in Microsoft account settings".to_string())
-        } else if INVALID_ACCOUNT.is_match(&data.as_str()) {
-            Err("Invalid credentials. Check your credentials".to_string())
-        } else {
-            Err("Unexpected response. Check your credentials. Response code: ".to_owned() + &response.status().as_u16().to_string())
-        }
-    };
+    }
 }
 
 pub async fn xbl_authenticate(login_response: LoginResponse, browser: bool) -> Result<AuthenticateResponse, String> {

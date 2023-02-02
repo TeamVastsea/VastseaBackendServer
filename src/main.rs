@@ -57,6 +57,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(echo)
+            .service(user::password_login)
             .service(user::bind_qq)
             .service(user::get_qq)
             .service(user::code_login)
