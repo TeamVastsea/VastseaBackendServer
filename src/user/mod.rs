@@ -111,8 +111,8 @@ async fn password_login(req: HttpRequest, req_body: String) -> impl Responder {
     };
 }
 
-#[post("/login_code")]
-pub async fn code_login(req: HttpRequest) -> impl Responder {
+#[get("/login_code")]
+pub async fn code_login(req: HttpRequest, _req_body: String) -> impl Responder {
     let uri = req.uri().to_string();
     let uri_encoded = UrlEncodedData::from(uri.as_str());
     let ip = req.peer_addr().unwrap().ip();
