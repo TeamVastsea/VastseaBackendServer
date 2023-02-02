@@ -26,7 +26,7 @@
 
 ### 账号密码微软登录
 - 请求：POST /password
-body:
+### body:
 {"username":"微软用户名","password":"微软密码"[,"token":bool]}
 - 返回：
   - 如果成功登录并获取到用户信息，则返回200和用户信息
@@ -34,7 +34,7 @@ body:
   - 如果用户未拥有mc，则返回401
   - 如遇其他问题，则返回500
 - 请求实例：POST /password
-body:
+### body:
 {"username":"test@outlook.com","password":"test"}
 - 返回实例：{"uuid": "544e8a58c8054879b01ad596d8175dc4", "username": "zrll_", "qq": null, "token": null}
 - 进度：70%
