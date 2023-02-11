@@ -1,38 +1,12 @@
 use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
 use hyper::{Body, Client, Request, body, http::HeaderValue};
-use lazy_static::lazy_static;
-use serde_json::{from_str};
-lazy_static! {
-    pub static ref LOGIN_WITH_XBOX:String="https://api.minecraftservices.com/authentication/login_with_xbox".to_string();
-    pub static ref OWNERSHIP:String="https://api.minecraftservices.com/entitlements/mcstore".to_string();
-    pub static ref PROFILE:String="https://api.minecraftservices.com/minecraft/profile".to_string();
-}
+use serde_json::{from_str, Value};
+use crate::user::UserMCProfile;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AccessToken {
-    pub access_token: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Items {
-    pub items: Vec<Item>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Item {}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserProfile {
-    pub uuid: String,
-    pub user_name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserProfileResponse {
-    pub id: String,
-    pub name: String,
-}
+pub static LOGIN_WITH_XBOX: &str = "https://api.minecraftservices.com/authentication/login_with_xbox";
+pub static OWNERSHIP: &str = "https://api.minecraftservices.com/entitlements/mcstore";
+pub static PROFILE: &str = "https://api.minecraftservices.com/minecraft/profile";
 
 pub async fn login_with_xbox(user_hash: String, xsts_token: String) -> Result<String, String>
 {
@@ -56,8 +30,11 @@ pub async fn login_with_xbox(user_hash: String, xsts_token: String) -> Result<St
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };
-    let json: AccessToken = from_str(data.as_str()).unwrap();
-    return Ok(json.access_token);
+    let json: Value = from_str(data.as_str()).unwrap();
+    return match json["access_token"].as_str() {
+        Some(a) => Ok(a.to_string()),
+        None => Err("Token is null.".to_string()),
+    };
 }
 
 
@@ -82,11 +59,15 @@ pub async fn user_has_game(access_token: String) -> Result<bool, String>
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };
-    let json: Items = from_str(data.as_str()).unwrap();
-    return Ok(json.items.len() > 0);
+    let json: Value = from_str(data.as_str()).unwrap();
+    let items = match json["items"].as_array() {
+        Some(a) => a,
+        None => { return Err(format!("Cannot parse return value({})", data.as_str())); }
+    };
+    return Ok(!items.is_empty());
 }
 
-pub async fn get_user_profile(access_token: String) -> Result<UserProfile, String>
+pub async fn get_user_profile(access_token: String) -> Result<UserMCProfile, String>
 {
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, Body>(https);
@@ -107,6 +88,14 @@ pub async fn get_user_profile(access_token: String) -> Result<UserProfile, Strin
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };
-    let json: UserProfileResponse = from_str(data.as_str()).unwrap();
-    return Ok(UserProfile { uuid: json.id, user_name: json.name});
+    let json: Value = from_str(data.as_str()).unwrap();
+    let uuid = match json["id"].as_str() {
+        Some(a) => a.to_string(),
+        None => { return Err("Cannot get uuid".to_string()); }
+    };
+    let user_name = match json["name"].as_str() {
+        Some(a) => a.to_string(),
+        None => { return Err("Cannot get user name".to_string()); }
+    };
+    return Ok(UserMCProfile { uuid, user_name });
 }

@@ -23,8 +23,8 @@ pub fn init(config: &mut Value) {
         edited = true;
     }
     if config["defaultUserGroup"] == Null {
-        warn!("'defaultUserGroup' not found, setting to  'user'  by default.");
-        config["defaultUserGroup"] = Value::from("user");
+        warn!("'defaultUserGroup' not found, setting to  'default'  by default.");
+        config["defaultUserGroup"] = Value::from("default");
         edited = true;
     }
     // if config["pluginPassword"] == Null {

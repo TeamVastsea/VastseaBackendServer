@@ -56,17 +56,14 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         App::new()
-            .service(echo)
-            .service(user::password_login)
-            .service(user::bind_qq)
-            .service(user::get_qq)
+            .service(ping)
             .service(user::code_login)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }
 
 #[get("/ping")]
-async fn echo(req: HttpRequest) -> impl Responder {
+async fn ping(req: HttpRequest) -> impl Responder {
     shadow!(build);
     info!("200/ping->{}: {}", req.peer_addr().unwrap().ip().to_string(), doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string());
     HttpResponse::Ok().body(doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string())
