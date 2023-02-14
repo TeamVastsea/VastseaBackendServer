@@ -11,6 +11,8 @@ use mongodb::options::ClientOptions;
 use serde_json::Value;
 use shadow_rs::shadow;
 use simple_log::{info, LogConfigBuilder};
+use crate::user::microsoft::request_access_token;
+use crate::user::{UserInfo, UserMCProfile};
 
 
 static mut CONFIG: Value = Value::Null;
@@ -54,10 +56,17 @@ async fn main() -> std::io::Result<()> {
     let db = client.database(&unsafe { &CONFIG }["mongodb"]["dbName"].as_str().unwrap());
     unsafe { MONGODB = Some(db); }
 
+    //test
+    let a = request_access_token("M.R3_BAY.c1697c80-1870-42ce-1fc6-e2e1f20374c1".to_string()).await.unwrap();
+    let b = UserMCProfile::from_access_token(a.access_token.unwrap()).await.unwrap();
+    let c = UserInfo::from_mc_profile(b).await.unwrap();
+    println!("{:?}", c);
+
+
     HttpServer::new(|| {
         App::new()
             .service(ping)
-            .service(user::code_login)
+            .service(user::user_get)
     }).bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_i64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     Ok(())
 }

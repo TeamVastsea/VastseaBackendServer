@@ -1,16 +1,13 @@
 use std::borrow::Cow;
 use actix_web::{get, HttpRequest, HttpResponse, Responder, patch};
-use actix_web::web::Json;
+
 use mongodb::bson::{doc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use simple_log::{debug, info, warn};
+use simple_log::{info, warn};
 use url_encoded_data::UrlEncodedData;
 
-use crate::user::minecraft::{get_user_profile};
 
-
-pub mod bind;
 pub mod microsoft;
 pub mod xbox;
 pub mod minecraft;
@@ -146,8 +143,26 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
             }
         }
     }
+    if uri_encoded.keys().contains(&"atoken") {
+        method = "atoken";
+        let code = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("atoken")).unwrap().to_string();
+        let mc_profile = match UserMCProfile::from_access_token(code).await {
+            Ok(a) => a,
+            Err(err) => {
+                warn!("500/user->{}: {}", ip.to_string(), &err);
+                return HttpResponse::InternalServerError().body(err);
+            }
+        };
+        user_info = match UserInfo::from_mc_profile(mc_profile).await {
+            Ok(a) => a,
+            Err(err) => {
+                warn!("500/user->{}: {}", ip.to_string(), &err);
+                return HttpResponse::InternalServerError().body(err);
+            }
+        }
+    }
     if uri_encoded.keys().contains(&"htoken") {
-        method = "token";
+        method = "htoken";
         let token = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("htoken")).unwrap().to_string();
         user_info = match UserInfo::from_token(token).await {
             Ok(a) => a,
@@ -170,62 +185,10 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
 
     if let Some(a) = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("token")) {
         if a.to_string() == "true" {
-            info!("200/user->{}", ip.to_string());
             result["token"] = Value::from(user_info.to_token().await);
         }
     };
 
+    info!("200/user->{}", ip.to_string());
     return HttpResponse::Ok().body(result.to_string());
-}
-
-#[patch("/bind_qq")]
-pub async fn bind_qq(req: HttpRequest, _req_body: String) -> impl Responder {
-    let ip = req.peer_addr().unwrap().ip();
-    let uri = req.uri().to_string();
-    let mut arg = uri.split("?");
-    if arg.clone().count() <= 1 {
-        warn!("500/bind_qq->{}: {}", ip.to_string(), "missing args");
-        return HttpResponse::InternalServerError().body("missing args");
-    }
-    let arg = urlencoding::decode(arg.nth(1).unwrap()).unwrap();
-    let content = match serde_json::from_str::<Value>(&arg) {
-        Err(e) => {
-            warn!("500/bind_qq->{}: {}", ip.to_string(), e.to_string());
-            return HttpResponse::InternalServerError().body(e.to_string());
-        }
-        Ok(v) => v,
-    };
-    let token = match content["token"].as_str() {
-        Some(v) => v,
-        None => {
-            warn!("500/bind_qq->{}: Token missing", ip.to_string());
-            return HttpResponse::InternalServerError().body("Token missing");
-        }
-    };
-    let qq = match content["qq"].as_i64() {
-        Some(v) => v,
-        None => {
-            warn!("500/bind_qq->{}: QQ missing", ip.to_string());
-            return HttpResponse::InternalServerError().body("QQ missing");
-        }
-    };
-    let profile = match get_user_profile(token.to_string()).await {
-        Err(err) => {
-            warn!("500/bind_qq->{}: Could not get profile\n{}", ip.to_string(),err);
-            return HttpResponse::InternalServerError().body("Could not get profile\n".to_owned() + &err);
-        }
-        Ok(a) => a,
-    };
-    return match bind::bind_qq(profile.uuid, qq).await {
-        Ok(_) => { HttpResponse::Ok().into() }
-        Err(e) => {
-            if e != "Already Bound" {
-                warn!("500/bind_qq->{}: {}", ip.to_string(), e);
-                HttpResponse::InternalServerError().body(e)
-            } else {
-                warn!("208/bind_qq->{}: Already bound", ip.to_string());
-                HttpResponse::AlreadyReported().body(e)
-            }
-        }
-    };
 }

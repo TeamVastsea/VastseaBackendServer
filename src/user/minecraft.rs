@@ -1,5 +1,5 @@
 use hyper_tls::HttpsConnector;
-use serde::{Deserialize, Serialize};
+
 use hyper::{Body, Client, Request, body, http::HeaderValue};
 use serde_json::{from_str, Value};
 use crate::user::UserMCProfile;

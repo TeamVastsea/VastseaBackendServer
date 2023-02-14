@@ -1,18 +1,11 @@
-use std::str::FromStr;
-use chrono::Utc;
 use hyper_tls::HttpsConnector;
-use rand::Rng;
 use std::{collections::HashMap};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use urlencoding::{encode, decode};
 use hyper::{Body, Client, Request, body, http::HeaderValue};
 use lazy_static::lazy_static;
 use serde_json::{from_str};
-use simple_log::debug;
-
-use super::microsoft::LoginResponse;
 lazy_static! {
     pub static ref AUTHORIZE: String=String::from("https://login.live.com/oauth20_authorize.srf?client_id=000000004C12AE6F&redirect_uri=https://login.live.com/oauth20_desktop.srf&scope=service::user.auth.xboxlive.com::MBI_SSL&display=touch&response_type=token&locale=en");
     pub static ref XBL: String=String::from("https://user.auth.xboxlive.com/user/authenticate");
@@ -248,7 +241,7 @@ pub struct PreAuthResponse {
 //     }
 // }
 
-pub async fn xbl_authenticate(login_response: LoginResponse, browser: bool) -> Result<AuthenticateResponse, String> {
+pub async fn xbl_authenticate(mut access_token: String, browser: bool) -> Result<AuthenticateResponse, String> {
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, Body>(https);
     let mut request_builder = Request::builder().method("POST");
@@ -259,10 +252,7 @@ pub async fn xbl_authenticate(login_response: LoginResponse, browser: bool) -> R
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type", HeaderValue::from_static("application/json"));
     headers.insert("x-xbl-contract-version", HeaderValue::from_static("0"));
-    let mut access_token = match login_response.access_token {
-        None => { return Err("accessToken cannot be null".to_string()); }
-        Some(a) => a,
-    };
+
     if browser {
         access_token = "d=".to_owned() + &access_token;
     }

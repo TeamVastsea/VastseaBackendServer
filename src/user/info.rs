@@ -4,18 +4,27 @@ use mongodb::bson::doc;
 use mongodb::Collection;
 use crate::{CONFIG, MONGODB};
 use crate::user::{UserInfo, UserMCProfile};
-use crate::user::microsoft::request_access_token;
+use crate::user::microsoft::{LoginResponse, request_access_token};
 use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
 use crate::user::xbox::{xbl_authenticate, xsts_authenticate};
 
 impl UserMCProfile {
     pub async fn from_code(code: String) -> Result<UserMCProfile, String> {
-        let access_token = match request_access_token(code.to_string()).await {
+        let response = match request_access_token(code).await {
             Ok(a) => a,
-            Err(e) => {
-                return Err(format!("Cannot get access token ({})", e));
-            }
+            Err(err) => { return Err(err); }
         };
+        UserMCProfile::complete_login(response.access_token.unwrap()).await
+    }
+
+    pub async fn from_access_token(access_token: String) -> Result<UserMCProfile, String> {
+        return match UserMCProfile::complete_login(access_token).await {
+            Ok(a) => Ok(a),
+            Err(e) => Err(e)
+        };
+    }
+
+    async fn complete_login(access_token: String) -> Result<UserMCProfile, String> {
         let xbl_response = match xbl_authenticate(access_token, true).await {
             Ok(a) => a,
             Err(e) => {
