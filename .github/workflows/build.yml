@@ -20,8 +20,8 @@ jobs:
       run: cargo build --release --package rust_server --bin rust_server
     - name: Display structure of downloaded files
       run: ls -R
-      working-directory: /
+      working-directory: ./
     - name: Archieve Artifact
       uses: actions/download-artifact@v3.0.2
       with: 
-        path: /target/release/
+        path: ./target/release/
