@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use actix_web::{get, HttpRequest, HttpResponse, Responder, patch};
+use actix_web::{get, HttpRequest, HttpResponse, Responder};
 
 use mongodb::bson::{doc};
 use serde::{Deserialize, Serialize};

@@ -12,16 +12,11 @@ pub fn init(config: &mut Value) {
     let mut edited: bool = false;
     // let mut rng = rand::thread_rng();
 
-    if config["allowLocalHost"] == Null {
-        warn!("'allowLocalHost' not found, setting to  false  by default.");
-        config["allowLocalHost"] = Value::from(false);
-        edited = true;
-    }
-    if config["baseUrl"] == Null {
-        warn!("'baseUrl' not found, setting to  '127.0.0.1'  by default.");
-        config["baseUrl"] = Value::from("127.0.0.1");
-        edited = true;
-    }
+    // if config["baseUrl"] == Null {
+    //     warn!("'baseUrl' not found, setting to  '127.0.0.1'  by default.");
+    //     config["baseUrl"] = Value::from("127.0.0.1");
+    //     edited = true;
+    // }
     if config["defaultUserGroup"] == Null {
         warn!("'defaultUserGroup' not found, setting to  'default'  by default.");
         config["defaultUserGroup"] = Value::from("default");
@@ -37,10 +32,14 @@ pub fn init(config: &mut Value) {
         let key = HS256Key::generate();
         warn!("'tokenKey' not found, setting to  '{}' .", base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
         config["tokenKey"] = Value::from(base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
-        edited = true;
     }
 
 
+    if config["connection"]["tls"] == Null {
+        warn!("'connection.tls' not found, setting to  'false'  by default.");
+        config["connection"]["tls"] = Value::from(false);
+        edited == true;
+    }
     if config["connection"]["serverPort"] == Null {
         warn!("'connection.serverPort' not found, setting to  7890  by default.");
         config["connection"]["serverPort"] = Value::from(7890);
@@ -58,35 +57,35 @@ pub fn init(config: &mut Value) {
     }
 
 
-    if config["main"]["enabled"] == Null {
-        warn!("'mail.enabled' not found, setting to  false  by default.");
-        config["main"]["enabled"] = Value::from(false);
-        edited = true;
-    }
-    if config["mail"]["secureConnection"] == Null {
-        warn!("'mail.secureConnection' not found, setting to  false  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["secureConnection"] = Value::from(false);
-        config["main"]["enabled"] = Value::from(false);
-        edited = true;
-    }
-    if config["mail"]["smtpUrl"] == Null {
-        warn!("'mail.smtpHost' not found, setting to  'smtp.126.com:25'  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["smtpUrl"] = Value::from("smtp.126.com:25");
-        config["main"]["enabled"] = Value::from(false);
-        edited = true;
-    }
-    if config["mail"]["token"] == Null {
-        warn!("'mail.token' not found, setting to  '!!!!!'  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["token"] = Value::from("!!!!!");
-        config["main"]["enabled"] = Value::from(false);
-        edited = true;
-    }
-    if config["mail"]["username"] == Null {
-        warn!("'mail.username' not found, setting to  '111@126.com'  by default.[Mail will be disabled! Please enable after change!]");
-        config["mail"]["username"] = Value::from("111@126.com");
-        config["main"]["enabled"] = Value::from(false);
-        edited = true;
-    }
+    // if config["main"]["enabled"] == Null {
+    //     warn!("'mail.enabled' not found, setting to  false  by default.");
+    //     config["main"]["enabled"] = Value::from(false);
+    //     edited = true;
+    // }
+    // if config["mail"]["secureConnection"] == Null {
+    //     warn!("'mail.secureConnection' not found, setting to  false  by default.[Mail will be disabled! Please enable after change!]");
+    //     config["mail"]["secureConnection"] = Value::from(false);
+    //     config["main"]["enabled"] = Value::from(false);
+    //     edited = true;
+    // }
+    // if config["mail"]["smtpUrl"] == Null {
+    //     warn!("'mail.smtpHost' not found, setting to  'smtp.126.com:25'  by default.[Mail will be disabled! Please enable after change!]");
+    //     config["mail"]["smtpUrl"] = Value::from("smtp.126.com:25");
+    //     config["main"]["enabled"] = Value::from(false);
+    //     edited = true;
+    // }
+    // if config["mail"]["token"] == Null {
+    //     warn!("'mail.token' not found, setting to  '!!!!!'  by default.[Mail will be disabled! Please enable after change!]");
+    //     config["mail"]["token"] = Value::from("!!!!!");
+    //     config["main"]["enabled"] = Value::from(false);
+    //     edited = true;
+    // }
+    // if config["mail"]["username"] == Null {
+    //     warn!("'mail.username' not found, setting to  '111@126.com'  by default.[Mail will be disabled! Please enable after change!]");
+    //     config["mail"]["username"] = Value::from("111@126.com");
+    //     config["main"]["enabled"] = Value::from(false);
+    //     edited = true;
+    // }
 
 
     if config["mongodb"]["dbUrl"] == Null {
@@ -99,7 +98,6 @@ pub fn init(config: &mut Value) {
         config["mongodb"]["dbName"] = Value::from("dashboard");
         edited = true;
     }
-
 
     if edited {
         save(config);

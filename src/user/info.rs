@@ -4,7 +4,7 @@ use mongodb::bson::doc;
 use mongodb::Collection;
 use crate::{CONFIG, MONGODB};
 use crate::user::{UserInfo, UserMCProfile};
-use crate::user::microsoft::{LoginResponse, request_access_token};
+use crate::user::microsoft::{request_access_token};
 use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
 use crate::user::xbox::{xbl_authenticate, xsts_authenticate};
 
