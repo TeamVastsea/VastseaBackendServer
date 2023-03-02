@@ -21,4 +21,4 @@ jobs:
     - name: Archieve Artifact
       uses: actions/download-artifact@v3.0.2
       with: 
-        path: target/release/rust_server*
+        path: /target/release/*
