@@ -38,7 +38,7 @@ pub fn init(config: &mut Value) {
     if config["connection"]["tls"] == Null {
         warn!("'connection.tls' not found, setting to  'false'  by default.");
         config["connection"]["tls"] = Value::from(false);
-        edited == true;
+        edited = true;
     }
     if config["connection"]["serverPort"] == Null {
         warn!("'connection.serverPort' not found, setting to  7890  by default.");

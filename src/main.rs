@@ -1,5 +1,6 @@
 mod config;
 mod user;
+mod command;
 
 use std::fs;
 use std::fs::{OpenOptions};
@@ -12,7 +13,6 @@ use mongodb::options::ClientOptions;
 use serde_json::Value;
 use shadow_rs::shadow;
 use simple_log::{info, LogConfigBuilder};
-use simple_log::log::log;
 
 
 static mut CONFIG: Value = Value::Null;
@@ -56,14 +56,17 @@ async fn main() -> std::io::Result<()> {
     let db = client.database(&unsafe { &CONFIG }["mongodb"]["dbName"].as_str().unwrap());
     unsafe { MONGODB = Some(db); }
 
-    let tls = unsafe { &CONFIG }["connection"]["tls"].as_bool().unwrap();
 
+    //start command listener
+    tokio::spawn(async {command::listener().await;});
+
+    //start server
+    let tls = unsafe { &CONFIG }["connection"]["tls"].as_bool().unwrap();
     let server = HttpServer::new(|| {
         App::new()
             .service(ping)
             .service(user::user_get)
     });
-
     if !tls {
         server.bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_u64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     } else {
@@ -78,6 +81,7 @@ async fn main() -> std::io::Result<()> {
             .expect("bad certificate/key");
         server.bind_rustls(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_u64().unwrap() as u16), config).expect("Can not bind server to port").run().await.expect("Can not start server");
     }
+
     Ok(())
 }
 
