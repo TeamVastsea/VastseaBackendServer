@@ -62,7 +62,7 @@ async fn main() {
 
         match input.as_str() {
             "1" => {
-                let key = base64::engine::general_purpose::STANDARD.encode(HS256Key::generate().to_bytes());
+                let key = base64::engine::general_purpose::STANDARD.encode(HS256Key::generate().to_bytes()).replace("+", "-").replace("/", "*");
                 println!("Please input the usage of this key");
                 stdin.read_line(&mut buffer).expect("Cannot read from stdin...");
                 let input = buffer.trim_end().to_string();

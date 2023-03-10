@@ -35,7 +35,7 @@
     - 如果缺少参数，则返回400
     - 如果用户未拥有mc，则返回401
     - 如遇其他问题，则返回500
-- 请求实例：POST /userd?atoken=******
+- 请求实例：POST /user?atoken=******
 - 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
   group": ["default"], "bind_qq": null }
 
@@ -76,12 +76,14 @@
 本模块所有api均需要颁发给机器人的api key
 ### API列表
 - [ ] 封禁用户
-- [ ] 绑定QQ
+- [x] 绑定QQ
 
-# 控制台命令使用指南
+### 绑定QQ
 
-## 申请api_key
-
-key &#60;description&#62;
-
-`description`: key的描述
+- 请求：PATCH /user?name=[name]&qq=[qq]&key=[key]
+- 返回：
+  - 如果成功绑定，则返回200
+  - 如果缺少参数，则返回400
+  - 如果key错误，则返回401
+  - 如遇其他问题，则返回500
+- 请求实例：POST /user?name=zrll_&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=

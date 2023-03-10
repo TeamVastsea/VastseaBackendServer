@@ -131,14 +131,14 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         let mc_profile = match UserMCProfile::from_code(code).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/user->{}: {}", ip.to_string(), &err);
+                warn!("500/user(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         };
         user_info = match UserInfo::from_mc_profile(mc_profile).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/user->{}: {}", ip.to_string(), &err);
+                warn!("500/user(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         }
@@ -149,14 +149,14 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         let mc_profile = match UserMCProfile::from_access_token(code).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/user->{}: {}", ip.to_string(), &err);
+                warn!("500/user(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         };
         user_info = match UserInfo::from_mc_profile(mc_profile).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/user->{}: {}", ip.to_string(), &err);
+                warn!("500/user(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         }
@@ -167,7 +167,7 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         user_info = match UserInfo::from_token(token).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/user->{}: {}", ip.to_string(), &err);
+                warn!("500/user(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         };
@@ -177,7 +177,7 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
     // }
 
     if method == "" {
-        warn!("400/user->{}: Missing args", ip.to_string());
+        warn!("400/user(get)->{}: Missing args", ip.to_string());
         return HttpResponse::BadRequest().body("Missing args");
     }
 
@@ -189,6 +189,6 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         }
     };
 
-    info!("200/user->{}", ip.to_string());
+    info!("200/user(get)->{}", ip.to_string());
     return HttpResponse::Ok().body(result.to_string());
 }

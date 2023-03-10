@@ -25,7 +25,7 @@ pub async fn get_api_key(params: Vec<String>) {
 
     let key = ApiKey {
         _id: key_string,
-        description: params.get(0).unwrap().to_string(),
+        usage: params.get(0).unwrap().to_string(),
         nbf,
         nat,
     };

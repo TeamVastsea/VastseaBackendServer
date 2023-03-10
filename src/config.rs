@@ -32,6 +32,7 @@ pub fn init(config: &mut Value) {
         let key = HS256Key::generate();
         warn!("'tokenKey' not found, setting to  '{}' .", base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
         config["tokenKey"] = Value::from(base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
+        edited = true;
     }
 
 
