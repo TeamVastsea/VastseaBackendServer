@@ -11,7 +11,7 @@ actix-web = { version = "4.2.1", features = ["rustls"] }
 serde_json = "1.0.91"
 serde = "1.0.152"
 simple-log = "1.5.1"
-mongodb = "2.3.1"
+mongodb = "2.4.0"
 chrono = "0.4.23"
 rand = "0.8.5"
 rand_core = { version = "0.6", features = ["std"] }
@@ -26,8 +26,9 @@ hyper-tls = "0.5.0"
 pcre2 = "0.2.3"
 url_encoded_data = "0.6.1"
 rustls-pemfile = "1.0.2"
-tokio = "1.26.0"
+tokio = { version = "1.26.0", features = ["full"] }
 bson = { version = "2", features = ["chrono-0_4"] }
+futures-util = "0.3.26"
 
 [build-dependencies]
 embed-resource = "1.8.0"
