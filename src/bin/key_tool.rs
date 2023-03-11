@@ -113,13 +113,13 @@ async fn main() {
                 let result: Cursor<ApiKey> = collection.find(doc! {"_id": input.clone()}, None).await.expect("Cannot find mongodb");
                 let counts: Vec<Result<ApiKey, _>> = result.collect().await;
                 println!("Will affect {} item(s)", counts.len());
-                println!("Are you sure to continue?");
+                println!("Are you sure to continue?(y/N)");
 
                 stdin.read_line(&mut buffer).expect("Cannot read from stdin...");
-                let input = buffer.trim_end().to_string();
+                let input2 = buffer.trim_end().to_string();
                 buffer.clear();
 
-                if input == "y" || input == "Y" {
+                if input2 == "y" || input2 == "Y" {
                     let result = collection.delete_many(doc! {"_id": input}, None).await.expect("Cannot delete mongodb");
                     println!("Success! {} item(s) affected.", result.deleted_count);
                 }

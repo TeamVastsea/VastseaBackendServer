@@ -75,8 +75,19 @@
 ## 机器人API
 本模块所有api均需要颁发给机器人的api key
 ### API列表
-- [ ] 封禁用户
+- [x] 封禁用户
 - [x] 绑定QQ
+
+### 封禁用户
+
+- 请求：PUT /user?name=[name]&reason=[reason]&key=[key]
+- reason为选填
+- 返回：
+  - 如果成功封禁，则返回200
+  - 如果缺少参数，则返回400
+  - 如果key错误，则返回401
+  - 如遇其他问题，则返回500
+- 请求实例：PUT /user?name=zrll_&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
 
 ### 绑定QQ
 
@@ -86,4 +97,4 @@
   - 如果缺少参数，则返回400
   - 如果key错误，则返回401
   - 如遇其他问题，则返回500
-- 请求实例：POST /user?name=zrll_&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
+- 请求实例：PATCH /user?name=zrll_&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=

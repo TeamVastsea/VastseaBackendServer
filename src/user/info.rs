@@ -83,6 +83,7 @@ impl UserInfo {
                     display_name: mc_profile.user_name,
                     enabled: true,
                     group: vec![unsafe { &CONFIG["defaultUserGroup"] }.as_str().unwrap().to_string()],
+                    ban_reason: None,
                 };
                 match info.register().await {
                     Ok(_) => Ok(info),

@@ -66,6 +66,7 @@ async fn main() -> std::io::Result<()> {
             .service(ping)
             .service(user::user_get)
             .service(bot::user_patch)
+            .service(bot::user_put)
     });
 
     let tls = unsafe { &CONFIG }["connection"]["tls"].as_bool().unwrap();

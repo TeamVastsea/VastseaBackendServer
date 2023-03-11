@@ -20,6 +20,7 @@ pub struct UserInfo {
     pub enabled: bool,
     pub group: Vec<String>,
     pub bind_qq: Option<i64>,
+    pub ban_reason: Option<String>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -123,6 +124,7 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         enabled: false,
         group: vec![],
         bind_qq: None,
+        ban_reason: None,
     };
 
     if uri_encoded.keys().contains(&"code") {
