@@ -11,6 +11,7 @@ use mongodb::options::ClientOptions;
 use serde_json::Value;
 use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
+use prettytable::{Cell, row, Row, Table};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ApiKey {
@@ -49,7 +50,7 @@ async fn main() {
     loop {
         print!("\x1b[2J");
         print!("\x1b[H");
-        println!("Please select the options below:\n1) Create API key\n2) Check API key\n3) Delete API key\n4) Quit(default) ");
+        println!("Please select the options below:\n1) Create API key\n2) Check API key\n3) Delete API key\n4) List all available key(s)\n5) Quit(default) ");
         stdin.read_line(&mut buffer).expect("Cannot read from stdin...");
         let input;
 
@@ -123,6 +124,36 @@ async fn main() {
                     let result = collection.delete_many(doc! {"_id": input}, None).await.expect("Cannot delete mongodb");
                     println!("Success! {} item(s) affected.", result.deleted_count);
                 }
+                pause();
+            },
+            "4" => {
+                let collection: &Collection<ApiKey> = &db.collection("api_key");
+
+                let result: Cursor<ApiKey> = collection.find(doc! {}, None).await.expect("Cannot find mongodb");
+                let keys: Vec<Result<ApiKey, _>> = result.collect().await;
+
+                let mut table = Table::new();
+                table.add_row(row!["KEY", "FOR", "NOT BEFORE", "NOT AFTER"]);
+
+                for key in keys {
+                    if let Ok(key_info) = key {
+
+                        if bson::DateTime::now() < key_info.nbf.into() || bson::DateTime::now() > key_info.nat.into() {
+                            table.add_row(Row::new(vec![
+                                Cell::new(key_info._id.as_str()).style_spec("Fr"),
+                                Cell::new(key_info.usage.as_str()),
+                                Cell::new(key_info.nbf.format("%Y-%m-%d %H:%M:%S").to_string().as_str()),
+                                Cell::new(key_info.nat.format("%Y-%m-%d %H:%M:%S").to_string().as_str())
+                            ]));
+                        } else {
+                            table.add_row(row![key_info._id, key_info.usage, key_info.nbf.format("%Y-%m-%d %H:%M:%S"), key_info.nat.format("%Y-%m-%d %H:%M:%S")]);
+                        }
+                    }
+                }
+
+                table.printstd();
+
+                println!("Keys in red are out dated.");
                 pause();
             },
             _ => { exit(0); },
