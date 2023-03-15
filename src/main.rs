@@ -2,6 +2,7 @@ mod config;
 mod user;
 mod command;
 mod bot;
+mod survey;
 
 use std::fs;
 use std::fs::{OpenOptions};

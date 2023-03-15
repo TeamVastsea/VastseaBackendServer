@@ -80,21 +80,22 @@
 
 ### 封禁用户
 
-- 请求：PUT /user?name=[name]&reason=[reason]&key=[key]
+- 请求：PUT /user?uuid=[uuid]&qq=[qq]&reason=[reason]&key=[key]
 - reason为选填
+- qq与uuid仅需提供一个
 - 返回：
   - 如果成功封禁，则返回200
   - 如果缺少参数，则返回400
   - 如果key错误，则返回401
   - 如遇其他问题，则返回500
-- 请求实例：PUT /user?name=zrll_&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
+- 请求实例：PUT /user?uuid=544e8a58c8054879b01ad596d8175dc4&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
 
 ### 绑定QQ
 
-- 请求：PATCH /user?name=[name]&qq=[qq]&key=[key]
+- 请求：PATCH /user?uuid=[uuid]&qq=[qq]&key=[key]
 - 返回：
   - 如果成功绑定，则返回200
   - 如果缺少参数，则返回400
   - 如果key错误，则返回401
   - 如遇其他问题，则返回500
-- 请求实例：PATCH /user?name=zrll_&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
+- 请求实例：PATCH /user?uuid=544e8a58c8054879b01ad596d8175dc4&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=

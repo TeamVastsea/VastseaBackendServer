@@ -3,9 +3,9 @@ use mongodb::Collection;
 use crate::MONGODB;
 use crate::user::UserInfo;
 
-pub async fn bind_qq(name: String, qq: i64) -> Result<(), ()> {
+pub async fn bind_qq(uuid: String, qq: i64) -> Result<(), ()> {
     let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
-    let user = collection.find_one(doc! {"display_name": name}, None).await.unwrap();
+    let user = collection.find_one(doc! {"_id": uuid}, None).await.unwrap();
 
 
     if user.is_none() || user.clone().unwrap().bind_qq != None {

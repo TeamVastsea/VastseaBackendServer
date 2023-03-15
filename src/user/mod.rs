@@ -14,7 +14,7 @@ pub mod minecraft;
 mod info;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserInfo {
+pub struct UserInfo {//_id: mc uuid
     pub _id: String,
     pub display_name: String,
     pub enabled: bool,
