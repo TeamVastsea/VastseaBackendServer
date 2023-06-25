@@ -1,8 +1,8 @@
 mod config;
 mod user;
-mod command;
-mod bot;
+mod api;
 mod survey;
+mod utils;
 
 use std::fs;
 use std::fs::{OpenOptions};
@@ -58,16 +58,15 @@ async fn main() -> std::io::Result<()> {
     let db = client.database(&unsafe { &CONFIG }["mongodb"]["dbName"].as_str().unwrap());
     unsafe { MONGODB = Some(db); }
 
-    //start command listener
-    // tokio::spawn(async {command::listener().await;});
-
     //start server
     let server = HttpServer::new(|| {
         App::new()
             .service(ping)
             .service(user::user_get)
-            .service(bot::user_patch)
-            .service(bot::user_put)
+            .service(api::user_patch)
+            .service(api::user_put)
+            .service(api::user_qq_get)
+            .service(api::user_luck_get)
     });
 
     let tls = unsafe { &CONFIG }["connection"]["tls"].as_bool().unwrap();

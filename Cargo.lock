@@ -2125,6 +2125,7 @@ dependencies = [
  "hyper-tls",
  "jwt-simple",
  "lazy_static",
+ "md-5",
  "mongodb",
  "pcre2",
  "prettytable-rs",

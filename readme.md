@@ -15,7 +15,7 @@
 
 ### code微软登录
 
-- 请求：GET /user?code=[获取的code]&token=[是否需要服务器token]
+- 请求：GET /users?code=[获取的code]&token=[是否需要服务器token]
 - 请求说明：
     - code(参考 `https://mccteam.github.io/redirect.html` 中的获取方式)
 - 返回：
@@ -23,31 +23,31 @@
     - 如果缺少参数，则返回400
     - 如果用户未拥有mc，则返回401
     - 如遇其他问题，则返回500
-- 请求实例：GET /user?code=M.R3_BAY.ae4a08be-40bc-d750-9fb2-15e0c808c543
+- 请求实例：GET /users?code=M.R3_BAY.ae4a08be-40bc-d750-9fb2-15e0c808c543
 - 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
   group": ["default"], "bind_qq": null }
 
-### 账号密码微软登录
+### access_token微软登录
 
-- 请求：GET /user?atoken=[access_token]
+- 请求：GET /users?atoken=[access_token]
 - 返回：
     - 如果成功登录并获取到用户信息，则返回200和用户信息
     - 如果缺少参数，则返回400
     - 如果用户未拥有mc，则返回401
     - 如遇其他问题，则返回500
-- 请求实例：POST /user?atoken=******
+- 请求实例：POST /users?atoken=******
 - 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
   group": ["default"], "bind_qq": null }
 
-### 账号密码微软登录
+### 瀚海token登录
 
-- 请求：GET /user?htoken=[token]
+- 请求：GET /users?htoken=[token]
 - 返回：
     - 如果成功登录并获取到用户信息，则返回200和用户信息
     - 如果缺少参数，则返回400
     - 如果用户未拥有mc，则返回401
     - 如遇其他问题，则返回500
-- 请求实例：POST /userd?htoken=******
+- 请求实例：POST /users?htoken=******
 - 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
   group": ["default"], "bind_qq": null }
 
@@ -72,15 +72,17 @@
 - [ ] *请求开始问卷或重新答题
 - [ ] *提交答案
 
-## 机器人API
-本模块所有api均需要颁发给机器人的api key
+## 外部API
+本模块所有api均需要api key
 ### API列表
 - [x] 封禁用户
 - [x] 绑定QQ
+- [x] 获取QQ
+- [x] 获取幸运值
 
 ### 封禁用户
 
-- 请求：PUT /user?uuid=[uuid]&qq=[qq]&reason=[reason]&key=[key]
+- 请求：PUT /users?uuid=[uuid]&qq=[qq]&reason=[reason]&key=[key]
 - reason为选填
 - qq与uuid仅需提供一个
 - 返回：
@@ -88,14 +90,34 @@
   - 如果缺少参数，则返回400
   - 如果key错误，则返回401
   - 如遇其他问题，则返回500
-- 请求实例：PUT /user?uuid=544e8a58c8054879b01ad596d8175dc4&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
+- 请求实例：PUT /users?uuid=544e8a58c8054879b01ad596d8175dc4&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
 
 ### 绑定QQ
 
-- 请求：PATCH /user?uuid=[uuid]&qq=[qq]&key=[key]
+- 请求：PATCH /users?uuid=[uuid]&qq=[qq]&key=[key]
 - 返回：
   - 如果成功绑定，则返回200
   - 如果缺少参数，则返回400
   - 如果key错误，则返回401
   - 如遇其他问题，则返回500
-- 请求实例：PATCH /user?uuid=544e8a58c8054879b01ad596d8175dc4&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU=
+- 请求实例：PATCH /users?uuid=544e8a58c8054879b01ad596d8175dc4&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
+
+### 获取QQ
+- 请求：GET /user/qq?uuid=[uuid]&key=[key]
+- 返回：
+  - 如果成功获取，返回200
+  - 如果缺少参数，返回400
+  - 如果key错误，返回500
+  - 如果用户不存在，返回500
+  - 如果发生其他错误，返回500
+- 请求实例：GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
+
+### 获取幸运值
+- 请求：GET /user/luck?uuid=[uuid]&key=[key]
+- 返回：
+  - 如果成功获取，返回200
+  - 如果缺少参数，返回400
+  - 如果key错误，返回500
+  - 如果用户未绑定，返回500
+  - 如果发生其他错误，返回500
+- 请求实例：GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~

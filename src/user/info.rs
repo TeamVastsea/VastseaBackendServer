@@ -93,6 +93,21 @@ impl UserInfo {
         }
     }
 
+    pub async fn from_uuid(uuid: String) -> Result<Self, String> {
+        let collection: Collection<UserInfo> = unsafe { &MONGODB.as_ref() }.unwrap().collection("users");
+        return match collection.find_one(doc! {"_id": &uuid}, None).await.unwrap() {
+            Some(a) => {
+                if !a.enabled {
+                    return Err("User disabled.".to_string());
+                }
+                Ok(a)
+            }
+            None => {
+                Err("User does not exists.".to_string())
+            }
+        }
+    }
+
     pub async fn register(&self) -> Result<(), String> {
         let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
         match collection.insert_one(self, None).await {

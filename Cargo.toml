@@ -30,6 +30,7 @@ tokio = { version = "1.26.0", features = ["full"] }
 bson = { version = "2", features = ["chrono-0_4"] }
 futures-util = "0.3.26"
 prettytable-rs = "0.10.0"
+md-5 = "0.10.5"
 
 [build-dependencies]
 embed-resource = "1.8.0"
