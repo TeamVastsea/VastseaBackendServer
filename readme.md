@@ -1,4 +1,4 @@
-# API使用指南
+# 瀚海工艺-Vastsea | 后端API使用指南
 
 - API遵守RESTful
 - 返回的内容在body里面
@@ -10,46 +10,52 @@
 - [x] code微软登录
 - [x] access_token微软登录
 - [x] 瀚海token登录
-- [ ] 刷新mc信息
+- [ ] 刷新Minecraft信息
 - [ ] 删除账户
 
 ### code微软登录
 
-- 请求：GET /users?code=[获取的code]&token=[是否需要服务器token]
+- 请求：`GET /users?code=[获取的code]&token=[是否需要服务器token]`
 - 请求说明：
     - code(参考 `https://mccteam.github.io/redirect.html` 中的获取方式)
 - 返回：
-    - 如果成功登录并获取到用户信息，则返回200和用户信息
-    - 如果缺少参数，则返回400
-    - 如果用户未拥有mc，则返回401
-    - 如遇其他问题，则返回500
-- 请求实例：GET /users?code=M.R3_BAY.ae4a08be-40bc-d750-9fb2-15e0c808c543
-- 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
-  group": ["default"], "bind_qq": null }
+    - 如果成功登录并获取到用户信息，则返回`200`和用户信息
+    - 如果缺少参数，则返回`400`
+    - 如果用户未拥有Minecraft正版账号，则返回`401`
+    - 如遇其他问题，则返回`500`
+- 请求实例：`GET /users?code=M.R3_BAY.ae4a08be-40bc-d750-9fb2-15e0c808c543`
+- 返回实例：
+  ```json
+  { "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "group": ["default"], "bind_qq": null }
+  ```
 
 ### access_token微软登录
 
-- 请求：GET /users?atoken=[access_token]
+- 请求：`GET /users?atoken=[access_token]`
 - 返回：
-    - 如果成功登录并获取到用户信息，则返回200和用户信息
-    - 如果缺少参数，则返回400
-    - 如果用户未拥有mc，则返回401
-    - 如遇其他问题，则返回500
-- 请求实例：POST /users?atoken=******
-- 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
-  group": ["default"], "bind_qq": null }
+    - 如果成功登录并获取到用户信息，则返回`200`和用户信息
+    - 如果缺少参数，则返回`400`
+    - 如果用户未拥有Minecraft正版账号，则返回`401`
+    - 如遇其他问题，则返回`500`
+- 请求实例：`POST /users?atoken=******`
+- 返回实例：
+  ```json
+  { "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "group": ["default"], "bind_qq": null }
+  ```
 
 ### 瀚海token登录
 
-- 请求：GET /users?htoken=[token]
+- 请求：`GET /users?htoken=[token]`
 - 返回：
-    - 如果成功登录并获取到用户信息，则返回200和用户信息
-    - 如果缺少参数，则返回400
-    - 如果用户未拥有mc，则返回401
-    - 如遇其他问题，则返回500
-- 请求实例：POST /users?htoken=******
-- 返回实例：{ "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "
-  group": ["default"], "bind_qq": null }
+    - 如果成功登录并获取到用户信息，则返回`200`和用户信息
+    - 如果缺少参数，则返回`400`
+    - 如果用户未拥有mc，则返回`401`
+    - 如遇其他问题，则返回`500`
+- 请求实例：`POST /users?htoken=******`
+- 返回实例：
+  ```json
+  { "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "group": ["default"], "bind_qq": null }
+  ```
 
 ## 文件模块
 
@@ -82,42 +88,42 @@
 
 ### 封禁用户
 
-- 请求：PUT /users?uuid=[uuid]&qq=[qq]&reason=[reason]&key=[key]
+- 请求：`PUT /users?uuid=[uuid]&qq=[qq]&reason=[reason]&key=[key]`
 - reason为选填
 - qq与uuid仅需提供一个
 - 返回：
-  - 如果成功封禁，则返回200
-  - 如果缺少参数，则返回400
-  - 如果key错误，则返回401
-  - 如遇其他问题，则返回500
-- 请求实例：PUT /users?uuid=544e8a58c8054879b01ad596d8175dc4&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
+  - 如果成功封禁，则返回`200`
+  - 如果缺少参数，则返回`400`
+  - 如果key错误，则返回`401`
+  - 如遇其他问题，则返回`500`
+- 请求实例：`PUT /users?uuid=544e8a58c8054879b01ad596d8175dc4&reason=QAQ&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~`
 
 ### 绑定QQ
 
-- 请求：PATCH /users?uuid=[uuid]&qq=[qq]&key=[key]
+- 请求：`PATCH /users?uuid=[uuid]&qq=[qq]&key=[key]`
 - 返回：
-  - 如果成功绑定，则返回200
-  - 如果缺少参数，则返回400
-  - 如果key错误，则返回401
-  - 如遇其他问题，则返回500
-- 请求实例：PATCH /users?uuid=544e8a58c8054879b01ad596d8175dc4&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
+  - 如果成功绑定，则返回`200`
+  - 如果缺少参数，则返回`400`
+  - 如果key错误，则返回`401`
+  - 如遇其他问题，则返回`500`
+- 请求实例：`PATCH /users?uuid=544e8a58c8054879b01ad596d8175dc4&qq=2406324685&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~`
 
 ### 获取QQ
-- 请求：GET /user/qq?uuid=[uuid]&key=[key]
+- 请求：`GET /user/qq?uuid=[uuid]&key=[key]`
 - 返回：
-  - 如果成功获取，返回200
-  - 如果缺少参数，返回400
-  - 如果key错误，返回500
-  - 如果用户不存在，返回500
-  - 如果发生其他错误，返回500
-- 请求实例：GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
+  - 如果成功获取，返回`200`
+  - 如果缺少参数，返回`400`
+  - 如果key错误，返回`500`
+  - 如果用户不存在，返回`500`
+  - 如果发生其他错误，返回`500`
+- 请求实例：`GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~`
 
 ### 获取幸运值
-- 请求：GET /user/luck?uuid=[uuid]&key=[key]
+- 请求：`GET /user/luck?uuid=[uuid]&key=[key]`
 - 返回：
-  - 如果成功获取，返回200
-  - 如果缺少参数，返回400
-  - 如果key错误，返回500
-  - 如果用户未绑定，返回500
-  - 如果发生其他错误，返回500
-- 请求实例：GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~
+  - 如果成功获取，返回`200`
+  - 如果缺少参数，返回`400`
+  - 如果key错误，返回`500`
+  - 如果用户未绑定，返回`500`
+  - 如果发生其他错误，返回`500`
+- 请求实例：`GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~` 
