@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use serde_json::{from_str, Error};
 use shadow_rs::shadow;
 lazy_static! {
-    pub static ref CLIENT_ID: String = String::from("a9924c31-f355-4fe9-a7e5-bd72e140d820");
+    pub static ref CLIENT_ID: String = String::from("646004c1-0054-4157-b5b5-4cb89f6eaa1a");
     pub static ref SIGN_IN_URL: String = format!("https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?client_id={}&response_type=code&redirect_uri=https%3A%2F%2Fmccteam.github.io%2Fredirect.html&scope=XboxLive.signin%20offline_access%20openid%20email&prompt=select_account&response_mode=fragment", CLIENT_ID.clone());
     pub static ref TOKEN_URL: String = String::from("https://login.microsoftonline.com/consumers/oauth2/v2.0/token");
 }
