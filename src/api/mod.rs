@@ -6,7 +6,6 @@ mod luck;
 use std::borrow::Cow;
 use actix_web::{HttpRequest, HttpResponse, patch, put, get, Responder};
 use chrono::{DateTime, Utc};
-use simple_log::{info, warn};
 use url_encoded_data::UrlEncodedData;
 use serde::{Deserialize, Serialize};
 use crate::api::ban::{ban_user, ban_user_qq};
@@ -62,7 +61,6 @@ pub async fn user_put(req: HttpRequest) -> impl Responder {
 
     let uri = req.uri().to_string();
     let uri_encoded = UrlEncodedData::from(uri.as_str());
-    let ip = req.peer_addr().unwrap().ip().to_string();
 
     if !((uri_encoded.exists("uuid") || uri_encoded.exists("qq")) && uri_encoded.exists("key")) {
         return HttpResponse::BadRequest().body("Missing argument(s).");

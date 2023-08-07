@@ -1,16 +1,13 @@
 mod news_file;
 
 use actix_web::{get, HttpResponse, post, Responder, web};
-use actix_web::body::MessageBody;
 use actix_web::web::Query;
 use bson::doc;
 use bson::oid::ObjectId;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use futures_util::StreamExt;
 use mongodb::Collection;
 use mongodb::options::FindOptions;
-use rand::prelude::Distribution;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use crate::MONGODB;
 use crate::user::UserInfo;
@@ -38,13 +35,13 @@ pub struct NewsCreateRequest {
 }
 
 #[derive(Deserialize)]
-struct GetNewsQueue {
+pub struct GetNewsQueue {
     page: u8,
-    size: Option<u8>
+    size: Option<u8>,
 }
 
 #[get("/news")]
-pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder  {
+pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder {
     let page = queue.page;
     let size = match queue.size {
         None => { 10 }
@@ -98,7 +95,7 @@ pub async fn news_create(body: web::Json<NewsCreateRequest>) -> impl Responder {
     }
 
     let info = NewsInfo {
-        _id:ObjectId::new().to_hex(),
+        _id: ObjectId::new().to_hex(),
         released: Utc::now(),
         title: info.title.clone(),
         description: info.description.clone(),

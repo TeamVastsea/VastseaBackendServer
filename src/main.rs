@@ -8,7 +8,7 @@ mod news;
 use std::fs;
 use std::fs::{OpenOptions};
 use std::io::{BufReader, Read};
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, HttpRequest};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get};
 use chrono::{Local};
 use mongodb::{Client, Database};
 use mongodb::bson::doc;
