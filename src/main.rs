@@ -3,6 +3,7 @@ mod user;
 mod api;
 mod survey;
 mod utils;
+mod news;
 
 use std::fs;
 use std::fs::{OpenOptions};
@@ -61,8 +62,12 @@ async fn main() -> std::io::Result<()> {
     //start server
     let server = HttpServer::new(|| {
         App::new()
+            .wrap(actix_web::middleware::Logger::new("%a %r -> %s with in %Dms, %bb"))
             .service(ping)
             .service(user::user_get)
+            .service(news::news_get)
+            .service(news::news_details)
+            .service(news::news_create)
             .service(api::user_patch)
             .service(api::user_put)
             .service(api::user_qq_get)
@@ -71,6 +76,7 @@ async fn main() -> std::io::Result<()> {
 
     let tls = unsafe { &CONFIG }["connection"]["tls"].as_bool().unwrap();
     if !tls {
+        info!("Listening: http://0.0.0.0:{}", unsafe { &CONFIG }["connection"]["serverPort"].as_u64().unwrap());
         server.bind(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_u64().unwrap() as u16)).expect("Can not bind server to port").run().await.expect("Can not start server");
     } else {
         info!("Loading certs...");
@@ -82,6 +88,8 @@ async fn main() -> std::io::Result<()> {
             .with_no_client_auth()
             .with_single_cert(certs, private_key)
             .expect("bad certificate/key");
+
+        info!("Listening: https://0.0.0.0:{}", unsafe { &CONFIG }["connection"]["serverPort"].as_u64().unwrap());
         server.bind_rustls(("0.0.0.0", unsafe { &CONFIG }["connection"]["serverPort"].as_u64().unwrap() as u16), config).expect("Can not bind server to port").run().await.expect("Can not start server");
     }
 
@@ -119,8 +127,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 }
 
 #[get("/ping")]
-async fn ping(req: HttpRequest) -> impl Responder {
+async fn ping() -> impl Responder {
     shadow!(build);
-    info!("200/ping->{}: {}", req.peer_addr().unwrap().ip().to_string(), doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string());
     HttpResponse::Ok().body(doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string())
 }

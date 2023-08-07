@@ -57,6 +57,34 @@
   { "_id": "544e8a58c8054879b01ad596d8175dc4", "display_name": "zrll_", "enabled": true, "group": ["default"], "bind_qq": null }
   ```
 
+## 新闻模块
+
+新闻id为正整数（可能不连续）
+带`*`的需要管理员权限
+
+### API列表
+
+- [x] 获取新闻列表
+- [x] 获取新闻详细信息
+- [x] *上传新闻
+
+### 获取新闻列表
+
+- 返回开始id及其之后n-1个新闻的信息
+- 请求：`GET /news?start=[开始nid]&n=[获取个数]`
+
+### 获取新闻详细信息
+
+- 请求：`GET /news/[id]`
+- 返回md文件内容
+
+### 上传新闻
+
+- 请求：`POST /news`
+- 请求body格式：`{"token": "瀚海token", "body": "新闻具体内容", "info": {"title": "新闻标题", "description": "新闻简介"}}`
+- 返回：创建成功200，鉴权失败401，创建失败500
+- 请求body示例`{"token": "token", "body": "this is the first", "info": {"title": "111", "description": "first"}}`
+
 ## 文件模块
 
 ### API列表
@@ -126,4 +154,4 @@
   - 如果key错误，返回`500`
   - 如果用户未绑定，返回`500`
   - 如果发生其他错误，返回`500`
-- 请求实例：`GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~` 
+- 请求实例：`GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~`

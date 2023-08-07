@@ -4,7 +4,6 @@ use actix_web::{get, HttpRequest, HttpResponse, Responder};
 use mongodb::bson::{doc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use simple_log::{info, warn};
 use url_encoded_data::UrlEncodedData;
 
 
@@ -116,7 +115,6 @@ pub struct UserMCProfile {
 pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
     let uri = req.uri().to_string();
     let uri_encoded = UrlEncodedData::from(uri.as_str());
-    let ip = req.peer_addr().unwrap().ip();
     let mut method = "";
     let mut user_info: UserInfo = UserInfo {
         _id: "".to_string(),
@@ -133,14 +131,12 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         let mc_profile = match UserMCProfile::from_code(code).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/users(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         };
         user_info = match UserInfo::from_mc_profile(mc_profile).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/users(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         }
@@ -151,14 +147,12 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         let mc_profile = match UserMCProfile::from_access_token(code).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/users(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         };
         user_info = match UserInfo::from_mc_profile(mc_profile).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/users(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         }
@@ -169,7 +163,6 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         user_info = match UserInfo::from_token(token).await {
             Ok(a) => a,
             Err(err) => {
-                warn!("500/users(get)->{}: {}", ip.to_string(), &err);
                 return HttpResponse::InternalServerError().body(err);
             }
         };
@@ -179,7 +172,6 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
     // }
 
     if method == "" {
-        warn!("400/user(get)->{}: Missing args", ip.to_string());
         return HttpResponse::BadRequest().body("Missing args");
     }
 
@@ -191,6 +183,5 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         }
     };
 
-    info!("200/users(get)->{}", ip.to_string());
     return HttpResponse::Ok().body(result.to_string());
 }
