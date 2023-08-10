@@ -10,7 +10,7 @@ impl NewsInfo {
         fs::create_dir_all("news/").unwrap();
         let mut file = match File::open("news/".to_string() + &filename) {
             Ok(a) => { a }
-            Err(err) => { return "".to_string()}
+            Err(_) => { return "".to_string()}
         };
         let md = &mut "".to_string();
         file.read_to_string(md).unwrap();

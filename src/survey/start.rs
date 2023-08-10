@@ -13,7 +13,7 @@ async fn start_survey(submitter: String, category: Categories) -> Result<(), Str
 
     let aid = generate_uuid();
 
-    let collection: &Collection<SurveyLog> = &unsafe { MONGODB.as_ref() }.unwrap().collection("survey_log");
+    let collection: Collection<SurveyLog> = MONGODB.collection("survey_log");
     let log_doc = SurveyLog {
         aid: aid.clone(),
         modifier: submitter.clone(),
@@ -23,7 +23,7 @@ async fn start_survey(submitter: String, category: Categories) -> Result<(), Str
     };
     collection.insert_one(log_doc, None).await.expect("Cannot write mongodb");
 
-    let collection: &Collection<SurveyAnswer> = &unsafe{ MONGODB.as_ref() }.unwrap().collection("survey");
+    let collection: Collection<SurveyAnswer> = MONGODB.collection("survey");
     let answer = SurveyAnswer{
         _id: aid,
         submitter,
@@ -41,7 +41,7 @@ async fn start_survey(submitter: String, category: Categories) -> Result<(), Str
 }
 
 async fn is_started(submitter: String) -> (bool, Option<Categories>) {
-    let collection: &Collection<SurveyAnswer> = &unsafe { MONGODB.as_ref() }.unwrap().collection("survey");
+    let collection: Collection<SurveyAnswer> = MONGODB.collection("survey");
     let doc = collection.find_one(doc! {"submitter": submitter, "status": "completing"}, None).await.expect("Cannot read mongodb");
 
     return if let Some(result) = doc {

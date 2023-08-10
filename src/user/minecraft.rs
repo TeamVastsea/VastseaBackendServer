@@ -18,7 +18,7 @@ pub async fn login_with_xbox(user_hash: String, xsts_token: String) -> Result<St
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Content-Type", HeaderValue::from_static("application/json"));
     let post_data = "{\"identityToken\": \"XBL3.0 x=".to_owned() + &user_hash + ";" + &xsts_token + "\"}";
-    let mut response = match client.request(request_builder.uri(LOGIN_WITH_XBOX.clone()).body(Body::from(post_data)).unwrap()).await {
+    let mut response = match client.request(request_builder.uri(LOGIN_WITH_XBOX).body(Body::from(post_data)).unwrap()).await {
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };
@@ -47,7 +47,7 @@ pub async fn user_has_game(access_token: String) -> Result<bool, String>
     headers.insert("Accept", HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Authorization", HeaderValue::from_str(format!("Bearer {}", access_token).as_str()).unwrap());
-    let mut response = match client.request(request_builder.uri(OWNERSHIP.clone()).body(Body::empty()).unwrap()).await {
+    let mut response = match client.request(request_builder.uri(OWNERSHIP).body(Body::empty()).unwrap()).await {
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };
@@ -76,7 +76,7 @@ pub async fn get_user_profile(access_token: String) -> Result<UserMCProfile, Str
     headers.insert("Accept", HeaderValue::from_static("*/*"));
     headers.insert("Connection", HeaderValue::from_static("close"));
     headers.insert("Authorization", HeaderValue::from_str(format!("Bearer {}", access_token).as_str()).unwrap());
-    let mut response = match client.request(request_builder.uri(PROFILE.clone()).body(Body::empty()).unwrap()).await {
+    let mut response = match client.request(request_builder.uri(PROFILE).body(Body::empty()).unwrap()).await {
         Err(e) => { return Err(e.to_string()); }
         Ok(a) => a,
     };

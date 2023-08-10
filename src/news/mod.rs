@@ -54,7 +54,7 @@ pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder {
     let limit = size;
 
     let options = FindOptions::builder().sort(doc! {"released": -1}).skip(skip as u64).limit(limit as i64).build();
-    let collection: &Collection<NewsInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("news");
+    let collection: Collection<NewsInfo> = MONGODB.collection("news");
 
     let mut news_cursor = collection.find(doc! {}, options).await.unwrap();
     let mut news = Vec::new();
@@ -68,7 +68,7 @@ pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder {
 
 #[get("/news/{id}")]
 pub async fn news_details(path: web::Path<String>) -> impl Responder {
-    let collection: &Collection<NewsInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("news");
+    let collection: Collection<NewsInfo> = MONGODB.collection("news");
 
     let news = match collection.find_one(doc! {"_id": path.into_inner()}, None).await.unwrap() {
         None => { return HttpResponse::NotFound().body("ID not found"); }
@@ -80,7 +80,7 @@ pub async fn news_details(path: web::Path<String>) -> impl Responder {
 
 #[post("/news")]
 pub async fn news_create(body: web::Json<NewsCreateRequest>) -> impl Responder {
-    let collection: &Collection<NewsInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("news");
+    let collection: Collection<NewsInfo> = MONGODB.collection("news");
     let info = &body.info;
     let token = &body.token;
     let body = &body.body;

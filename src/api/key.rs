@@ -1,12 +1,11 @@
 use bson::doc;
 use bson::DateTime;
 use mongodb::Collection;
-use simple_log::debug;
 use crate::api::ApiKey;
 use crate::MONGODB;
 
 pub async fn examine_key(key: String) -> Result<(), ()> {
-    let collection: &Collection<ApiKey> = &unsafe { MONGODB.as_ref() }.unwrap().collection("api_key");
+    let collection: Collection<ApiKey> = MONGODB.collection("api_key");
 
     let a = collection.find_one(doc! {"_id": key}, None).await.unwrap();
     if a.is_none() {

@@ -2,7 +2,7 @@ use jwt_simple::prelude::{Claims, Duration, HS256Key, MACLike};
 use base64::{Engine};
 use mongodb::bson::doc;
 use mongodb::Collection;
-use crate::{CONFIG, MONGODB};
+use crate::{MONGODB, CONFIG};
 use crate::user::{UserInfo, UserMCProfile};
 use crate::user::microsoft::{request_access_token};
 use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
@@ -68,7 +68,7 @@ impl UserMCProfile {
 
 impl UserInfo {
     pub async fn from_mc_profile(mc_profile: UserMCProfile) -> Result<UserInfo, String> {
-        let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
+        let collection: Collection<UserInfo> = MONGODB.collection("users");
         match collection.find_one(doc! {"_id": &mc_profile.uuid}, None).await.unwrap() {
             Some(a) => {
                 if !a.enabled {
@@ -82,7 +82,7 @@ impl UserInfo {
                     _id: mc_profile.uuid,
                     display_name: mc_profile.user_name,
                     enabled: true,
-                    group: vec![unsafe { &CONFIG["defaultUserGroup"] }.as_str().unwrap().to_string()],
+                    group: CONFIG.default_user_group.clone(),
                     ban_reason: None,
                 };
                 match info.register().await {
@@ -94,7 +94,7 @@ impl UserInfo {
     }
 
     pub async fn from_uuid(uuid: String) -> Result<Self, String> {
-        let collection: Collection<UserInfo> = unsafe { &MONGODB.as_ref() }.unwrap().collection("users");
+        let collection: Collection<UserInfo> = MONGODB.collection("users");
         return match collection.find_one(doc! {"_id": &uuid}, None).await.unwrap() {
             Some(a) => {
                 if !a.enabled {
@@ -109,7 +109,7 @@ impl UserInfo {
     }
 
     pub async fn register(&self) -> Result<(), String> {
-        let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
+        let collection: Collection<UserInfo> = MONGODB.collection("users");
         match collection.insert_one(self, None).await {
             Ok(_) => Ok(()),
             Err(err) => Err(err.to_string()),
@@ -117,13 +117,13 @@ impl UserInfo {
     }
 
     pub async fn to_token(&self) -> String {
-        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode(unsafe { CONFIG["tokenKey"].as_str().unwrap() }).unwrap().as_slice());
+        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode( &CONFIG.token_key ).unwrap().as_slice());
         let claim = Claims::with_custom_claims(self.clone(), Duration::from_days(7));
         key.authenticate(claim).unwrap()
     }
 
     pub async fn from_token(token: String) -> Result<UserInfo, String> {
-        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode(unsafe { CONFIG["tokenKey"].as_str().unwrap() }).unwrap().as_slice());
+        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode( &CONFIG.token_key ).unwrap().as_slice());
         let claims = key.verify_token::<UserInfo>(&token, None);
         match claims {
             Ok(info) => Ok(info.custom),

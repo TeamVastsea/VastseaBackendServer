@@ -1,114 +1,130 @@
+use std::fs;
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{Read, Write};
 use base64::Engine;
+use futures::executor::block_on;
 use jwt_simple::prelude::HS256Key;
+use mongodb::{Client, Database};
+use mongodb::options::ClientOptions;
+use serde::{Deserialize, Serialize};
+use serde_inline_default::serde_inline_default;
 
-use serde_json::Value;
-use serde_json::Value::Null;
-use simple_log::{info, warn};
+use simple_log::info;
+use crate::CONFIG;
 
-pub fn init(config: &mut Value) {
-    info!("Checking configs...");
-    let mut edited: bool = false;
-    // let mut rng = rand::thread_rng();
+#[serde_inline_default]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ServerConfig {
+    #[serde(default = "generate_default_user_group")]
+    pub default_user_group: Vec<String>,
+    #[serde(default = "generate_default_key")]
+    pub token_key: String,
+    #[serde(default = "generate_connect_setting")]
+    pub connection: ConnectionSetting,
+    #[serde(default = "generate_mongodb_setting")]
+    pub mongodb: MongodbSetting,
+    #[serde(default = "generate_rabbitmq_setting")]
+    pub rabbitmq: RabbitmqSetting,
+}
 
-    // if config["baseUrl"] == Null {
-    //     warn!("'baseUrl' not found, setting to  '127.0.0.1'  by default.");
-    //     config["baseUrl"] = Value::from("127.0.0.1");
-    //     edited = true;
-    // }
-    if config["defaultUserGroup"] == Null {
-        warn!("'defaultUserGroup' not found, setting to  'default'  by default.");
-        config["defaultUserGroup"] = Value::from("default");
-        edited = true;
-    }
-    // if config["pluginPassword"] == Null {
-    //     let pass: String = Alphanumeric.sample_iter(&mut rng).take(16).map(char::from).collect::<String>();
-    //     warn!("'pluginPassword' not found, setting to  '{}'  by default.", pass);
-    //     config["pluginPassword"] = Value::from(pass);
-    //     edited = true;
-    // }
-    if config["tokenKey"] == Null {
-        let key = HS256Key::generate();
-        warn!("'tokenKey' not found, setting to  '{}' .", base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
-        config["tokenKey"] = Value::from(base64::engine::general_purpose::STANDARD.encode(key.to_bytes()));
-        edited = true;
-    }
+#[serde_inline_default]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ConnectionSetting {
+    #[serde_inline_default(false)]
+    pub tls: bool,
+    #[serde_inline_default(7890)]
+    pub server_port: u16,
+    #[serde_inline_default(String::from("./cert.crt"))]
+    pub ssl_cert: String,
+    #[serde_inline_default(String::from("./private.key"))]
+    pub ssl_key: String,
+}
 
+#[serde_inline_default]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MongodbSetting {
+    #[serde_inline_default(String::from("mongodb://127.0.0.1:27017"))]
+    pub uri: String,
+    #[serde_inline_default(String::from("backend"))]
+    pub db_name: String,
+}
 
-    if config["connection"]["tls"] == Null {
-        warn!("'connection.tls' not found, setting to  'false'  by default.");
-        config["connection"]["tls"] = Value::from(false);
-        edited = true;
-    }
-    if config["connection"]["serverPort"] == Null {
-        warn!("'connection.serverPort' not found, setting to  7890  by default.");
-        config["connection"]["serverPort"] = Value::from(7890);
-        edited = true;
-    }
-    if config["connection"]["sslCert"] == Null {
-        warn!("'connection.sslCert' not found, setting to  '.\\keys\\my_domain.crt'  by default.");
-        config["connection"]["sslCert"] = Value::from(".\\keys\\my_domain.crt");
-        edited = true;
-    }
-    if config["connection"]["sslKey"] == Null {
-        warn!("'connection.sslKey' not found, setting to  '.\\keys\\private.key'  by default.");
-        config["connection"]["sslKey"] = Value::from(".\\keys\\private.key");
-        edited = true;
-    }
+#[serde_inline_default]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RabbitmqSetting {
+    #[serde_inline_default(String::from("amqp://guest:guest@localhost:5672"))]
+    pub uri: String,
+    #[serde_inline_default(String::from("amqprs.example"))]
+    pub rounting_key: String,
+    #[serde_inline_default(String::from("amq.topic"))]
+    pub exchange_name: String,
+    #[serde_inline_default(String::from("github"))]
+    pub queue_name: String,
+}
 
+fn generate_default_user_group() -> Vec<String> {
+    vec!["default".to_string()]
+}
 
-    // if config["main"]["enabled"] == Null {
-    //     warn!("'mail.enabled' not found, setting to  false  by default.");
-    //     config["main"]["enabled"] = Value::from(false);
-    //     edited = true;
-    // }
-    // if config["mail"]["secureConnection"] == Null {
-    //     warn!("'mail.secureConnection' not found, setting to  false  by default.[Mail will be disabled! Please enable after change!]");
-    //     config["mail"]["secureConnection"] = Value::from(false);
-    //     config["main"]["enabled"] = Value::from(false);
-    //     edited = true;
-    // }
-    // if config["mail"]["smtpUrl"] == Null {
-    //     warn!("'mail.smtpHost' not found, setting to  'smtp.126.com:25'  by default.[Mail will be disabled! Please enable after change!]");
-    //     config["mail"]["smtpUrl"] = Value::from("smtp.126.com:25");
-    //     config["main"]["enabled"] = Value::from(false);
-    //     edited = true;
-    // }
-    // if config["mail"]["token"] == Null {
-    //     warn!("'mail.token' not found, setting to  '!!!!!'  by default.[Mail will be disabled! Please enable after change!]");
-    //     config["mail"]["token"] = Value::from("!!!!!");
-    //     config["main"]["enabled"] = Value::from(false);
-    //     edited = true;
-    // }
-    // if config["mail"]["username"] == Null {
-    //     warn!("'mail.username' not found, setting to  '111@126.com'  by default.[Mail will be disabled! Please enable after change!]");
-    //     config["mail"]["username"] = Value::from("111@126.com");
-    //     config["main"]["enabled"] = Value::from(false);
-    //     edited = true;
-    // }
+fn generate_default_key() -> String {
+    let key = HS256Key::generate();
+    base64::engine::general_purpose::STANDARD.encode(key.to_bytes())
+}
 
-
-    if config["mongodb"]["dbUrl"] == Null {
-        warn!("'mongodb.dbUrl' not found, setting to  'mongodb://127.0.0.1:27017'  by default.");
-        config["mongodb"]["dbUrl"] = Value::from("mongodb://127.0.0.1:27017");
-        edited = true;
-    }
-    if config["mongodb"]["dbName"] == Null {
-        warn!("'mongodb.dbName' not found, setting to  'dashboard'  by default.");
-        config["mongodb"]["dbName"] = Value::from("dashboard");
-        edited = true;
-    }
-
-    if edited {
-        save(config);
-        panic!("Config have false value(s) generated, please change and restart the server. Panic now.");
+fn generate_connect_setting() -> ConnectionSetting {
+    ConnectionSetting {
+        tls: false,
+        server_port: 7890,
+        ssl_cert: "./cert.crt".to_string(),
+        ssl_key: "./private.key".to_string(),
     }
 }
 
-pub fn save(config: &mut Value) {
-    info!("Saving config to disk...");
-    let mut file = OpenOptions::new().write(true).truncate(true).open("server.config.json").expect("Can not open 'server.config.json'");
-    file.write(serde_json::to_string_pretty(config).unwrap().as_bytes()).expect("Can not write 'server.config.json'");
-    info!("Config saved");
+fn generate_mongodb_setting() -> MongodbSetting {
+    MongodbSetting {
+        uri: "mongodb://127.0.0.1:27017".to_string(),
+        db_name: "backend".to_string(),
+    }
+}
+
+fn generate_rabbitmq_setting() -> RabbitmqSetting {
+    RabbitmqSetting {
+        uri: "amqp://guest:guest@localhost:5672".to_string(),
+        rounting_key: "amqprs.example".to_string(),
+        exchange_name: "amq.topic".to_string(),
+        queue_name: "github".to_string(),
+    }
+}
+
+pub fn init() -> ServerConfig {
+    info!("Loading configs...");
+    let mut raw_config = String::new();
+    let mut file = fs::File::open("./config.toml").unwrap();
+    file.read_to_string(&mut raw_config).unwrap();
+
+    let config: ServerConfig = toml::from_str(&raw_config).unwrap();
+
+
+    if toml::to_string_pretty(&config).unwrap() != raw_config {
+        save(&config)
+    }
+
+    config
+}
+
+pub fn save(config: &ServerConfig) {
+    info!("Config changed, please edit and restart");
+    let config_str = toml::to_string_pretty(config).unwrap();
+
+    let mut file = OpenOptions::new().write(true).truncate(true).open("config.toml").expect("Can not open 'server.config.json'");
+    file.write(config_str.as_bytes()).unwrap();
+
+    panic!("config changed");
+}
+
+pub fn get_mongodb() -> Database {
+    let mongo_options = block_on(ClientOptions::parse(&CONFIG.mongodb.uri)).unwrap();
+
+    let client = Client::with_options(mongo_options).expect("Can not connect to mongodb");
+    client.database(&CONFIG.mongodb.db_name)
 }

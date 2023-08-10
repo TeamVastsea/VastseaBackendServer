@@ -38,7 +38,7 @@ async fn main() {
     let db_url = server_config["mongodb"]["dbUrl"].as_str().expect("Missing dbUrl");
     let db_name = server_config["mongodb"]["dbName"].as_str().expect("Missing dbName");
 
-    println!("db url: {}\ndb name: {}", db_url.clone(), db_name.clone());
+    println!("db url: {}\ndb name: {}", db_url, db_name);
 
     let mongo_options: ClientOptions = ClientOptions::parse(db_url).await.expect("Can not connect to mongodb");
     let client = Client::with_options(mongo_options).expect("Can not connect to mongodb");

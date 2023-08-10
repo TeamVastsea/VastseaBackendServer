@@ -4,7 +4,7 @@ use crate::MONGODB;
 use crate::user::UserInfo;
 
 pub async fn bind_qq(uuid: String, qq: i64) -> Result<(), ()> {
-    let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
+    let collection: Collection<UserInfo> = MONGODB.collection("users");
     let user = collection.find_one(doc! {"_id": uuid}, None).await.unwrap();
 
 
@@ -13,7 +13,7 @@ pub async fn bind_qq(uuid: String, qq: i64) -> Result<(), ()> {
     }
     let user = user.unwrap();
 
-    let collection: &Collection<UserInfo> = &unsafe { MONGODB.as_ref() }.unwrap().collection("users");
+    let collection: Collection<UserInfo> = MONGODB.collection("users");
     collection.update_many(doc! {"_id": user._id.clone()}, doc! {"$set": {"bind_qq": Some(qq)}}, None).await.unwrap();
 
     Ok(())
