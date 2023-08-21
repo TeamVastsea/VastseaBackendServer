@@ -1,7 +1,9 @@
-use std::fs;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
+use amqprs::channel::{Channel, QueueBindArguments, QueueDeclareArguments};
+use amqprs::connection::{Connection, OpenConnectionArguments};
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use futures::executor::block_on;
 use jwt_simple::prelude::HS256Key;
 use mongodb::{Client, Database};
@@ -9,7 +11,7 @@ use mongodb::options::ClientOptions;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
 
-use simple_log::info;
+use simple_log::{error, info};
 use crate::CONFIG;
 
 #[serde_inline_default]
@@ -67,8 +69,7 @@ fn generate_default_user_group() -> Vec<String> {
 }
 
 fn generate_default_key() -> String {
-    let key = HS256Key::generate();
-    base64::engine::general_purpose::STANDARD.encode(key.to_bytes())
+    STANDARD.encode(HS256Key::generate().to_bytes())
 }
 
 fn generate_connect_setting() -> ConnectionSetting {
@@ -96,10 +97,10 @@ fn generate_rabbitmq_setting() -> RabbitmqSetting {
     }
 }
 
-pub fn init() -> ServerConfig {
+pub fn get_log() -> ServerConfig {
     info!("Loading configs...");
     let mut raw_config = String::new();
-    let mut file = fs::File::open("./config.toml").unwrap();
+    let mut file = OpenOptions::new().read(true).write(true).create(true).open("config.toml").expect("Cannot open 'config.toml'");
     file.read_to_string(&mut raw_config).unwrap();
 
     let config: ServerConfig = toml::from_str(&raw_config).unwrap();
@@ -113,10 +114,10 @@ pub fn init() -> ServerConfig {
 }
 
 pub fn save(config: &ServerConfig) {
-    info!("Config changed, please edit and restart");
+    error!("Config changed, please edit and restart");
     let config_str = toml::to_string_pretty(config).unwrap();
 
-    let mut file = OpenOptions::new().write(true).truncate(true).open("config.toml").expect("Can not open 'server.config.json'");
+    let mut file = OpenOptions::new().write(true).truncate(true).open("config.toml").expect("Cannot open 'config.toml'");
     file.write(config_str.as_bytes()).unwrap();
 
     panic!("config changed");

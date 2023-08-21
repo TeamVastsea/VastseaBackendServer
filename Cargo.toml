@@ -34,6 +34,7 @@ md-5 = "0.10.5"
 serde-inline-default = "0.1.1"
 toml = "0.7.6"
 futures = "0.3.28"
+amqprs = {version = "1.4.1", features = ["urispec", "tls"] }
 
 [build-dependencies]
 embed-resource = "1.8.0"

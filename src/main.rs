@@ -4,10 +4,12 @@ mod api;
 mod survey;
 mod utils;
 mod news;
+mod github;
 
 use std::fs;
 use std::io::BufReader;
 use actix_web::{App, HttpResponse, HttpServer, Responder, get};
+use amqprs::channel::Channel;
 use chrono::{Local};
 use lazy_static::lazy_static;
 use mongodb::Database;
@@ -17,11 +19,8 @@ use simple_log::{info, LogConfigBuilder};
 use crate::config::ServerConfig;
 
 
-// static mut CONFIG: Value = Value::Null;
-// static mut MONGODB: Option<Database> = None;
-
 lazy_static! {
-    static ref CONFIG: ServerConfig = config::init();
+    static ref CONFIG: ServerConfig = config::get_log();
     static ref MONGODB: Database = config::get_mongodb();
 }
 
@@ -55,6 +54,7 @@ async fn main() -> std::io::Result<()> {
             .service(api::user_put)
             .service(api::user_qq_get)
             .service(api::user_luck_get)
+            .service(github::github_push)
     });
 
     let tls = CONFIG.connection.tls;
@@ -104,7 +104,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
     }
 
     panic!(
-        "no keys found in {:?} (encrypted keys not supported)",
+        "no keys found in {:?} (encrypted keys are not supported)",
         filename
     );
 }

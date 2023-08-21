@@ -252,6 +252,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "amqp_serde"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19659fab053d9b2cd4fa17649609a3241b181fcd14189931ea5c0976502fe381"
+dependencies = [
+ "bytes",
+ "serde",
+]
+
+[[package]]
+name = "amqprs"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e2322521c762bf63118adf170beaa78525b899f77c0a9dff94c944a0ab61a47"
+dependencies = [
+ "amqp_serde",
+ "async-trait",
+ "bytes",
+ "rustls-pemfile",
+ "serde",
+ "tokio",
+ "tokio-rustls",
+ "uriparse",
+ "webpki-roots",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2230,6 +2257,7 @@ name = "rust_server"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "amqprs",
  "base64 0.21.0",
  "bson",
  "chrono",
@@ -3113,6 +3141,16 @@ name = "untrusted"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
+
+[[package]]
+name = "uriparse"
+version = "0.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0200d0fc04d809396c2ad43f3c95da3582a2556eba8d453c1087f4120ee352ff"
+dependencies = [
+ "fnv",
+ "lazy_static",
+]
 
 [[package]]
 name = "url"
