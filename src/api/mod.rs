@@ -21,7 +21,7 @@ pub struct ApiKey {
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
     pub nbf: DateTime<Utc>,
     #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
-    pub nat: DateTime<Utc>
+    pub nat: DateTime<Utc>,
 }
 
 #[patch("/users")]
@@ -36,7 +36,7 @@ pub async fn user_patch(req: HttpRequest) -> impl Responder {
     let uuid = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("name")).unwrap().to_string();
     let qq = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("qq")).unwrap().to_string();
     let qq = match qq.parse::<i64>() {
-        Ok(a) => {a}
+        Ok(a) => { a }
         Err(err) => {
             return HttpResponse::BadRequest().body("Cannot parse qq: ".to_string() + err.to_string().as_str());
         }
@@ -58,7 +58,6 @@ pub async fn user_patch(req: HttpRequest) -> impl Responder {
 
 #[put("/users")]
 pub async fn user_put(req: HttpRequest) -> impl Responder {
-
     let uri = req.uri().to_string();
     let uri_encoded = UrlEncodedData::from(uri.as_str());
 
@@ -102,7 +101,7 @@ pub async fn user_put(req: HttpRequest) -> impl Responder {
                 HttpResponse::InternalServerError().body("User not found or already disabled.")
             }
         }
-    }
+    };
 }
 
 #[get("/user/qq")]

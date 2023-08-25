@@ -5,7 +5,6 @@ use crate::survey::{Actions, Categories, Status, SurveyAnswer, SurveyLog};
 use crate::utils::uuid::generate_uuid;
 
 async fn start_survey(submitter: String, category: Categories) -> Result<(), String> {
-
     let (started, _) = is_started(submitter.clone()).await;
     if started {
         return Err("Already started.".to_string());
@@ -24,7 +23,7 @@ async fn start_survey(submitter: String, category: Categories) -> Result<(), Str
     collection.insert_one(log_doc, None).await.expect("Cannot write mongodb");
 
     let collection: Collection<SurveyAnswer> = MONGODB.collection("survey");
-    let answer = SurveyAnswer{
+    let answer = SurveyAnswer {
         _id: aid,
         submitter,
         status: Status::Completing,
@@ -48,5 +47,5 @@ async fn is_started(submitter: String) -> (bool, Option<Categories>) {
         (true, Some(result.category))
     } else {
         (false, None)
-    }
+    };
 }

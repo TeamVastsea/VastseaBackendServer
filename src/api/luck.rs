@@ -1,4 +1,4 @@
-use md5::{ Md5, Digest };
+use md5::{Md5, Digest};
 use md5::digest::FixedOutput;
 
 pub fn calc_luck(uuid: String) -> u8 {

@@ -1,7 +1,5 @@
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
-use amqprs::channel::{Channel, QueueBindArguments, QueueDeclareArguments};
-use amqprs::connection::{Connection, OpenConnectionArguments};
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use futures::executor::block_on;

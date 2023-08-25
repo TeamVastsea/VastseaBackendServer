@@ -105,7 +105,7 @@ impl UserInfo {
             None => {
                 Err("User does not exists.".to_string())
             }
-        }
+        };
     }
 
     pub async fn register(&self) -> Result<(), String> {
@@ -117,13 +117,13 @@ impl UserInfo {
     }
 
     pub async fn to_token(&self) -> String {
-        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode( &CONFIG.token_key ).unwrap().as_slice());
+        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode(&CONFIG.token_key).unwrap().as_slice());
         let claim = Claims::with_custom_claims(self.clone(), Duration::from_days(7));
         key.authenticate(claim).unwrap()
     }
 
     pub async fn from_token(token: String) -> Result<UserInfo, String> {
-        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode( &CONFIG.token_key ).unwrap().as_slice());
+        let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode(&CONFIG.token_key).unwrap().as_slice());
         let claims = key.verify_token::<UserInfo>(&token, None);
         match claims {
             Ok(info) => Ok(info.custom),

@@ -13,7 +13,7 @@ struct SurveyAnswer {
     objective: Vec<String>,
     points: Vec<u8>,
     judged: bool,
-    judges: Vec<String>
+    judges: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -46,5 +46,5 @@ enum Actions {
 enum Status {
     Completing,
     Pending,
-    Done
+    Done,
 }

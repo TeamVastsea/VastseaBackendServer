@@ -13,13 +13,14 @@ pub mod minecraft;
 mod info;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserInfo {//_id: mc uuid
+pub struct UserInfo {
+    //_id: mc uuid
     pub _id: String,
     pub display_name: String,
     pub enabled: bool,
     pub group: Vec<String>,
     pub bind_qq: Option<i64>,
-    pub ban_reason: Option<String>
+    pub ban_reason: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

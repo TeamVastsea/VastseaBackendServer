@@ -194,7 +194,7 @@ async fn main() {
 
                 let collection: &Collection<ApiKey> = &db.collection("api_key");
 
-                let document = ApiKey{
+                let document = ApiKey {
                     _id: key,
                     usage: input,
                     nbf,
@@ -204,7 +204,7 @@ async fn main() {
                 collection.insert_one(document.clone(), None).await.expect("Cannot write mongodb.");
                 println!("Create succeeded!\nYour key is {}\nValid before {}.", document._id, document.nat.format("%Y-%m-%d %H:%M:%S"));
                 pause();
-            },
+            }
             "2" => {
                 println!("Please input the key");
                 stdin.read_line(&mut buffer).expect("Cannot read from stdin...");
@@ -222,7 +222,7 @@ async fn main() {
 
                 println!("The info of the key:\nYour key is for {}\nValid after {}\nValid before {}.", doc.usage, doc.nbf.format("%Y-%m-%d %H:%M:%S"), doc.nat.format("%Y-%m-%d %H:%M:%S"));
                 pause();
-            },
+            }
             "3" => {
                 println!("Please input the key");
                 stdin.read_line(&mut buffer).expect("Cannot read from stdin...");
@@ -245,7 +245,7 @@ async fn main() {
                     println!("Success! {} item(s) affected.", result.deleted_count);
                 }
                 pause();
-            },
+            }
             "4" => {
                 let collection: &Collection<ApiKey> = &db.collection("api_key");
 
@@ -257,13 +257,12 @@ async fn main() {
 
                 for key in keys {
                     if let Ok(key_info) = key {
-
                         if bson::DateTime::now() < key_info.nbf.into() || bson::DateTime::now() > key_info.nat.into() {
                             table.add_row(Row::new(vec![
                                 Cell::new(key_info._id.as_str()).style_spec("Fr"),
                                 Cell::new(key_info.usage.as_str()),
                                 Cell::new(key_info.nbf.format("%Y-%m-%d %H:%M:%S").to_string().as_str()),
-                                Cell::new(key_info.nat.format("%Y-%m-%d %H:%M:%S").to_string().as_str())
+                                Cell::new(key_info.nat.format("%Y-%m-%d %H:%M:%S").to_string().as_str()),
                             ]));
                         } else {
                             table.add_row(row![key_info._id, key_info.usage, key_info.nbf.format("%Y-%m-%d %H:%M:%S"), key_info.nat.format("%Y-%m-%d %H:%M:%S")]);
@@ -275,8 +274,8 @@ async fn main() {
 
                 println!("Keys in red are out dated.");
                 pause();
-            },
-            _ => { exit(0); },
+            }
+            _ => { exit(0); }
         }
     }
 }

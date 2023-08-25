@@ -9,7 +9,6 @@ mod github;
 use std::fs;
 use std::io::BufReader;
 use actix_web::{App, HttpResponse, HttpServer, Responder, get};
-use amqprs::channel::Channel;
 use chrono::{Local};
 use lazy_static::lazy_static;
 use mongodb::Database;
