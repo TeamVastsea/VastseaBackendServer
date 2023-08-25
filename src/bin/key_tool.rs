@@ -1,5 +1,5 @@
 use std::fs::OpenOptions;
-use std::{fs, io};
+use std::io;
 use std::io::{Read, Write};
 use std::process::exit;
 use base64::Engine;
@@ -10,7 +10,6 @@ use futures::executor::block_on;
 use jwt_simple::prelude::HS256Key;
 use mongodb::{Database, Client, Collection, Cursor};
 use mongodb::options::ClientOptions;
-use serde_json::Value;
 use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
 use lazy_static::lazy_static;
@@ -183,7 +182,7 @@ async fn main() {
 
         match input.as_str() {
             "1" => {
-                let key = base64::engine::general_purpose::STANDARD.encode(HS256Key::generate().to_bytes()).replace("+", "-").replace("/", "*").replace("=", "~");
+                let key = STANDARD.encode(HS256Key::generate().to_bytes()).replace("+", "-").replace("/", "*").replace("=", "~");
                 println!("Please input the usage of this key");
                 stdin.read_line(&mut buffer).expect("Cannot read from stdin...");
                 let input = buffer.trim_end().to_string();

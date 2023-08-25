@@ -57,13 +57,6 @@ impl UserMCProfile {
             Err(e) => Err(e.to_string())
         };
     }
-
-    // pub fn from_user_info(info: UserInfo) -> UserMCProfile {
-    //     UserMCProfile {
-    //         uuid: info._id,
-    //         user_name: info.display_name,
-    //     }
-    // }
 }
 
 impl UserInfo {
