@@ -1,4 +1,6 @@
 # 瀚海工艺-Vastsea | 后端API使用指南
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FTeamVastsea%2FVastseaBackendServer.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FTeamVastsea%2FVastseaBackendServer?ref=badge_shield)
+
 
 - API遵守RESTful
 - 返回的内容在body里面
@@ -155,3 +157,6 @@
   - 如果用户未绑定，返回`500`
   - 如果发生其他错误，返回`500`
 - 请求实例：`GET /user/qq?uuid=544e8a58c8054879b01ad596d8175dc4&key=q2XS6AXzNNMK2ksMDTf7bqxypBEM3q9CQq2WWE4KLOU~`
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FTeamVastsea%2FVastseaBackendServer.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FTeamVastsea%2FVastseaBackendServer?ref=badge_large)
