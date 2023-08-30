@@ -6,8 +6,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  PACKAGE_FILE: ${{ needs.create-nightly-release.outputs.package_prefix }}-${{ matrix.build_name }}.${{ startsWith(matrix.build_name, 'win') && 'zip' || 'tar.gz' }}
-  CARGO_BUILD_DIR: target
 
 
 jobs:
@@ -28,7 +26,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
-          targets: ${{ matrix.target }}
+          targets: target/
           components: rustfmt, clippy
 
       - name: Install Linux dependencies
