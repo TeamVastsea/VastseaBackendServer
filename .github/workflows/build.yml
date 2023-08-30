@@ -20,7 +20,11 @@ jobs:
 
       - name: Move `src` and `Cargo.toml`
         run: |
-          sudo mkdir /home/app/src
+          cd /home
+          sudo mkdir app
+          cd /app
+          mkdir src
+          cd /
           sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/src /home/app
           sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/Cargo.toml /home/app/
 
