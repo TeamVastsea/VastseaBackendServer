@@ -5,8 +5,8 @@ FROM rust:latest as build
 WORKDIR /home/app
 
 # Copy the Rust Project Files to Docker Image
-COPY ./Cargo.toml ./
-COPY ./src ./
+COPY ./Cargo.toml /home/app
+COPY ./src /home/app
 
 # Set up Target Environment variable
 ENV OUT_DIR /home/app/target

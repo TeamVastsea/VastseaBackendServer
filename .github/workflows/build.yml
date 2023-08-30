@@ -7,12 +7,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - build_name: linux-x86_64
-            os: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -30,11 +24,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Image and Push to DockerHub
+      - name: Build and Push Docker Image
         id: docker_build
         uses: docker/build-push-action@v4
         with:
-          context: ${{ env.CARGO_BUILD_DIR }}
+          context: .
           file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
