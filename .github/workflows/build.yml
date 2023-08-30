@@ -18,16 +18,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Move `src` and `Cargo.toml`
-        run: |
-          cd /home
-          sudo mkdir app
-          cd app
-          mkdir src
-          cd /
-          sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/src /home/app
-          sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/Cargo.toml /home/app/
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 

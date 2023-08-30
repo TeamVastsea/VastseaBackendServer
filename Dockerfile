@@ -5,11 +5,11 @@ FROM rust:latest as build
 WORKDIR /home/app
 
 # Copy the Rust Project Files to Docker Image
-COPY ./Cargo.toml ./Cargo.toml
-COPY ./src ./src
+COPY ./Cargo.toml ./
+COPY ./src ./
 
 # Set up Target Environment variable
-ENV OUT_DIR /home/app/target/
+ENV OUT_DIR /home/app/target
 
 # Cargo build Rust Project
 RUN cargo build --release
@@ -31,7 +31,7 @@ RUN \
 
 # Copy the binary files into Docker Image
 # Please replace the specific path according to your needs
-COPY --from=build /home/app/target/release/ /home/BackendServer
+COPY --from=build /home/app/target/release /home/BackendServer
 
 # Clean up build cache
 RUN \
@@ -39,4 +39,4 @@ RUN \
   apt-get autoclean && \
   rm -rf /var/lib/apt/lists/*
 
-CMD ["bash", "cd /home/BackendServer"]
+CMD ["bash"]
