@@ -20,7 +20,7 @@ jobs:
 
       - name: Move `src/` and `Cargo.toml`
         run: |
-          sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/src/ /home/app/src/
+          sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/src /home/app/src
           sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/Cargo.toml /home/app/Cargo.toml
 
       - name: Set up QEMU
