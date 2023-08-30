@@ -22,7 +22,7 @@ jobs:
         run: |
           cd /home
           sudo mkdir app
-          cd /app
+          cd app
           mkdir src
           cd /
           sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/src /home/app
