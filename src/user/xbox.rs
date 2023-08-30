@@ -26,7 +26,7 @@ pub struct PreAuthResponse {
     pub cookies: HashMap<String, Vec<String>>,
 }
 
-//TODO: wait for Microsoft Minecraft's application.
+// TODO: wait for Microsoft Minecraft's application.
 
 // pub async fn pre_auth() -> Result<PreAuthResponse, String> {
 //     let https = HttpsConnector::new();

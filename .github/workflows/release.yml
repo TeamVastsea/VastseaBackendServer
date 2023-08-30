@@ -1,5 +1,7 @@
 # .GitHub/workflows/release.yml
 
+name: Backend Docker Image CI
+
 on:
   release:
     types: [created]
