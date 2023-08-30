@@ -4,10 +4,6 @@ on:
   release:
     types: [ created ]
 
-env:
-  CARGO_TERM_COLOR: always
-
-
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -22,19 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: nightly
-          targets: target/
-          components: rustfmt, clippy
-
-      - name: Install Linux dependencies
+      - name: Move `src/` and `Cargo.toml`
         run: |
-          sudo apt-get update
-
-      - name: Cargo build
-        run: cargo build --release
+          sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/src/ /home/app/src/
+          sudo mv /home/runner/work/VastseaBackendServer/VastseaBackendServer/Cargo.toml /home/app/Cargo.toml
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
