@@ -8,8 +8,11 @@ WORKDIR /home/app
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
 
+# Set up Target Environment variable
+ENV OUT_DIR /home/app/target/
+
 # Cargo build Rust Project
-RUN CARGO_TARGET_DIR=/home/app/target/ cargo build --release
+RUN cargo build --release
 
 # Build a production environment Docker Image
 FROM ubuntu:22.04
