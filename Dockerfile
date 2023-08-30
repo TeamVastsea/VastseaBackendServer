@@ -1,3 +1,4 @@
+# Import Background Image
 FROM rust:latest as build
 
 # Set up work path
@@ -8,7 +9,7 @@ COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
 
 # Cargo build Rust Project
-RUN cargo build --release
+RUN CARGO_TARGET_DIR=/home/app/target/ cargo build --release
 
 # Build a production environment Docker Image
 FROM ubuntu:22.04
@@ -19,7 +20,6 @@ USER root
 
 # Ubuntu Initialization
 RUN \
-  sed -i 's/archive.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list && \
   ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
   echo 'Asia/Shanghai' > /etc/timezone && \
   apt-get update && \
@@ -36,4 +36,4 @@ RUN \
   apt-get autoclean && \
   rm -rf /var/lib/apt/lists/*
 
-CMD ["bash"]
+CMD ["bash", "cd /home/BackendServer"]
