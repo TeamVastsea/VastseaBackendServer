@@ -2,18 +2,10 @@
 FROM rust:latest as build
 
 # Set up work path.
-WORKDIR /home/app
-
-# Copy the Rust Project Files to Docker Image.
-# | Please pay attention to the COPY command, which is defined in Docker docs as follows:
-# | `Note: The directory itself is not copied, just its contents.`
-# | URL: https://docs.docker.com/engine/reference/builder/
-COPY ./Cargo.toml /home/app
-COPY ./src /home/app/src
-COPY ./build.rs /home/app
+WORKDIR .
 
 # Set up Target Environment variable.
-ENV OUT_DIR /home/app/target
+ENV OUT_DIR ./target
 
 # Cargo build Rust Project.
 RUN cargo build --release
@@ -24,15 +16,6 @@ LABEL author="Snowball_233"
 
 # Switch to Root account.
 USER root
-
-# Ubuntu Initialization.
-# | Please replace the time zone according to your needs.
-RUN \
-  ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-  echo 'Asia/Shanghai' > /etc/timezone && \
-  apt-get update && \
-  apt-get -y upgrade && \
-  apt-get install -y htop vim
 
 # Copy the binary files into Docker Image.
 # | Please replace the specific path according to your needs.
