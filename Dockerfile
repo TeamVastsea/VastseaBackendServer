@@ -20,5 +20,5 @@ RUN cargo build --release
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/backend_server /usr/local/bin
-# Run bash on start.
+
 CMD ["/usr/local/bin/backend_server"]
