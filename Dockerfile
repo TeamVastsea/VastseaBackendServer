@@ -8,7 +8,9 @@ WORKDIR .
 ENV OUT_DIR ./target
 
 # Cargo build Rust Project.
-RUN cargo build --release
+RUN \
+  ls && \
+  cargo build --release
 
 # Build a production environment Docker Image.
 FROM ubuntu:22.04
@@ -19,7 +21,7 @@ USER root
 
 # Copy the binary files into Docker Image.
 # | Please replace the specific path according to your needs.
-COPY --from=build /home/app/target/release /home/BackendServer
+COPY --from=build ./target/release /home/BackendServer
 
 # Clean up build cache.
 RUN \
