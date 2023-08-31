@@ -1,48 +1,24 @@
-# Import Basic Image.
-FROM rust:latest as build
+# cargo-chef and the Rust toolchain
+FROM lukemathwalker/cargo-chef AS chef
+WORKDIR /app
 
-# Set up work path.
-WORKDIR /home/app
+# prepare recipe
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Copy the Rust Project Files to Docker Image.
-# | Please pay attention to the COPY command, which is defined in Docker docs as follows:
-# | `Note: The directory itself is not copied, just its contents.`
-# | URL: https://docs.docker.com/engine/reference/builder/
-COPY ./Cargo.toml /home/app
-COPY ./src /home/app/src
-COPY ./build.rs /home/app
-
-# Set up Target Environment variable.
-ENV OUT_DIR /home/app/target
-
-# Cargo build Rust Project.
+# build artifact
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+## build dependencies
+RUN cargo chef cook --release --recipe-path recipe.json
+## build application
+COPY . .
 RUN cargo build --release
 
-# Build a production environment Docker Image.
-FROM ubuntu:22.04
-LABEL author="Snowball_233"
-
-# Switch to Root account.
-USER root
-
-# Ubuntu Initialization.
-# | Please replace the time zone according to your needs.
-RUN \
-  ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-  echo 'Asia/Shanghai' > /etc/timezone && \
-  apt-get update && \
-  apt-get -y upgrade && \
-  apt-get install -y htop vim
-
-# Copy the binary files into Docker Image.
-# | Please replace the specific path according to your needs.
-COPY --from=build /home/app/target/release /home/BackendServer
-
-# Clean up build cache.
-RUN \
-  apt-get clean && \
-  apt-get autoclean && \
-  rm -rf /var/lib/apt/lists/*
-
+# build slim image
+FROM debian:bookworm-slim AS runtime
+WORKDIR /app
+COPY --from=builder /app/target/release/backend_server /usr/local/bin
 # Run bash on start.
-CMD ["bash"]
+CMD ["/usr/local/bin/backend_server"]
