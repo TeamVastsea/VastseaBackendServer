@@ -1,0 +1,30 @@
+name: Cargo Check
+
+on:
+  push:
+    paths-ignore:
+       - '**.md'
+  pull_request:
+    paths-ignore:
+       - '**.md'
+
+jobs:
+  cargo-check:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: rustup toolchain install stable --profile minimal --no-self-update
+
+      - uses: ./
+        with:
+          workspaces: tests
+
+      - run: |
+          cargo check
+          cargo test
+          cargo build --release
+        working-directory: tests
