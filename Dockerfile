@@ -1,12 +1,6 @@
 # Import Basic Image.
 FROM rust:latest as build
 
-# Set up work path.
-WORKDIR .
-
-# Set up Target Environment variable.
-ENV OUT_DIR ./target
-
 # Cargo build Rust Project.
 RUN \
   ls && \
