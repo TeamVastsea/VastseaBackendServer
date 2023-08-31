@@ -19,6 +19,7 @@ RUN cargo build --release
 # build slim image
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
-COPY --from=builder /app/target/release/backend_server /usr/local/bin
+COPY --from=builder /app/target/release/backend_server /home/BackendServer
+COPY --from=builder /app/target/release/key_tool /home/BackendServer
 
-CMD ["/usr/local/bin/backend_server"]
+CMD ["bash"]
