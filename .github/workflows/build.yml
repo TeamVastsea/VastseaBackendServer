@@ -19,6 +19,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Login to GitHub Packages
         uses: docker/login-action@v2
         with:
@@ -36,5 +42,7 @@ jobs:
           tags: |
             ghcr.io/teamvastsea/backend-server:${{ github.ref_name }}
             ghcr.io/teamvastsea/backend-server:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend-server:${{ github.ref_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend-server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
