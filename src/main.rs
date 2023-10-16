@@ -17,7 +17,6 @@ use shadow_rs::shadow;
 use simple_log::{info, LogConfigBuilder};
 use crate::config::ServerConfig;
 
-
 lazy_static! {
     static ref CONFIG: ServerConfig = config::get_log();
     static ref MONGODB: Database = config::get_mongodb();

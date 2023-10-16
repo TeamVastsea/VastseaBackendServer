@@ -331,6 +331,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "backend_server"
+version = "0.1.3"
+dependencies = [
+ "actix-web",
+ "amqprs",
+ "base64 0.21.0",
+ "bson",
+ "chrono",
+ "embed-resource",
+ "futures",
+ "futures-util",
+ "hyper",
+ "hyper-tls",
+ "jwt-simple",
+ "lazy_static",
+ "md-5",
+ "mongodb",
+ "pcre2",
+ "prettytable-rs",
+ "rand",
+ "rand_core",
+ "regex",
+ "rustls",
+ "rustls-pemfile",
+ "serde",
+ "serde-inline-default",
+ "serde_json",
+ "shadow-rs",
+ "simple-log",
+ "tokio",
+ "toml",
+ "url_encoded_data",
+ "urlencoding",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2264,42 +2300,6 @@ dependencies = [
  "smallvec",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "rust_server"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "amqprs",
- "base64 0.21.0",
- "bson",
- "chrono",
- "embed-resource",
- "futures",
- "futures-util",
- "hyper",
- "hyper-tls",
- "jwt-simple",
- "lazy_static",
- "md-5",
- "mongodb",
- "pcre2",
- "prettytable-rs",
- "rand",
- "rand_core",
- "regex",
- "rustls",
- "rustls-pemfile",
- "serde",
- "serde-inline-default",
- "serde_json",
- "shadow-rs",
- "simple-log",
- "tokio",
- "toml",
- "url_encoded_data",
- "urlencoding",
 ]
 
 [[package]]
