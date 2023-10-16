@@ -34,6 +34,8 @@ pub struct ConnectionSetting {
     pub tls: bool,
     #[serde_inline_default(7890)]
     pub server_port: u16,
+    #[serde_inline_default(String::from("0.0.0.0"))]
+    pub server_ip: String,
     #[serde_inline_default(String::from("./cert.crt"))]
     pub ssl_cert: String,
     #[serde_inline_default(String::from("./private.key"))]
@@ -73,6 +75,7 @@ fn generate_default_key() -> String {
 fn generate_connect_setting() -> ConnectionSetting {
     ConnectionSetting {
         tls: false,
+        server_ip: "0.0.0.0".to_string(),
         server_port: 7890,
         ssl_cert: "./cert.crt".to_string(),
         ssl_key: "./private.key".to_string(),

@@ -58,8 +58,8 @@ async fn main() -> std::io::Result<()> {
 
     let tls = CONFIG.connection.tls;
     if !tls {
-        info!("Listening: http://0.0.0.0:{}", CONFIG.connection.server_port);
-        server.bind(("0.0.0.0", CONFIG.connection.server_port)).expect("Can not bind server to port").run().await.expect("Can not start server");
+        info!("Listening: http://{}:{}", &CONFIG.connection.server_ip, CONFIG.connection.server_port);
+        server.bind((CONFIG.connection.server_ip.to_string(), CONFIG.connection.server_port)).expect("Can not bind server to port").run().await.expect("Can not start server");
     } else {
         info!("Loading certs...");
         let certs = load_certs(&CONFIG.connection.ssl_cert);
@@ -71,8 +71,8 @@ async fn main() -> std::io::Result<()> {
             .with_single_cert(certs, private_key)
             .expect("bad certificate/key");
 
-        info!("Listening: https://0.0.0.0:{}", CONFIG.connection.server_port);
-        server.bind_rustls(("0.0.0.0", CONFIG.connection.server_port), config).expect("Can not bind server to port").run().await.expect("Can not start server");
+        info!("Listening: https://{}:{}", &CONFIG.connection.server_ip, CONFIG.connection.server_port);
+        server.bind_rustls((CONFIG.connection.server_ip.to_string(), CONFIG.connection.server_port), config).expect("Can not bind server to port").run().await.expect("Can not start server");
     }
 
     Ok(())
