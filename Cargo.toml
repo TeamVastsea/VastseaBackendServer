@@ -7,41 +7,35 @@ edition = "2021"
 
 [dependencies]
 rustls = "0.20.8"
-actix-web = { version = "4.3.1", features = ["rustls"] }
-serde_json = "1.0.91"
-serde = "1.0.183"
-simple-log = "1.5.1"
-mongodb = "2.6.0"
-chrono = "0.4.23"
+actix-web = { version = "4.4.0", features = ["rustls"] }
+serde_json = "1.0.107"
+serde = "1.0.189"
+simple-log = "1.6.0"
+mongodb = "2.7.0"
+chrono = "0.4.31"
 rand = "0.8.5"
-rand_core = { version = "0.6", features = ["std"] }
+rand_core = { version = "0.6.4", features = ["std"] }
 lazy_static = "1.4.0"
-base64 = "0.21.0"
+base64 = "0.21.4"
 jwt-simple = "0.11.2"
-shadow-rs = "0.23.0"
+shadow-rs = "0.24.1"
 urlencoding = "2.1.2"
 hyper = { version = "0.14.23", features = ["full"] }
-regex = "1.7.1"
+regex = "1.10.2"
 hyper-tls = "0.5.0"
-pcre2 = "0.2.3"
+pcre2 = "0.2.5"
 url_encoded_data = "0.6.1"
 rustls-pemfile = "1.0.2"
-tokio = { version = "1.29.1", features = ["full"] }
-bson = { version = "2", features = ["chrono-0_4"] }
-futures-util = "0.3.26"
+tokio = { version = "1.33.0", features = ["full"] }
+bson = { version = "2.7.0", features = ["chrono-0_4"] }
+futures-util = "0.3.28"
 prettytable-rs = "0.10.0"
-md-5 = "0.10.5"
+md-5 = "0.10.6"
 serde-inline-default = "0.1.1"
-toml = "0.7.6"
+toml = "0.8.2"
 futures = "0.3.28"
-amqprs = {version = "1.4.1", features = ["urispec", "tls"] }
+amqprs = {version = "1.5.0", features = ["urispec", "tls"] }
 
 [build-dependencies]
-embed-resource = "2.2.0"
-shadow-rs = "0.23.0"
-
-[source.crates-io]
-replace-with = 'ustc'
-
-[source.ustc]
-registry = "git://mirrors.ustc.edu.cn/crates.io-index"
+embed-resource = "2.4.0"
+shadow-rs = "0.24.1"
