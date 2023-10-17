@@ -17,7 +17,7 @@ rand = "0.8.5"
 rand_core = { version = "0.6.4", features = ["std"] }
 lazy_static = "1.4.0"
 base64 = "0.21.4"
-jwt-simple = "0.11.2"
+jwt-simple = "0.11.7"
 shadow-rs = "0.24.1"
 urlencoding = "2.1.2"
 hyper = { version = "0.14.23", features = ["full"] }
