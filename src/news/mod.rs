@@ -67,7 +67,7 @@ pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder {
 }
 
 #[get("/news/{id}")]
-pub async fn news_details(path: web::Path<String>) -> impl Responder {
+pub async fn news_id_get(path: web::Path<String>) -> impl Responder {
     let collection: Collection<NewsInfo> = MONGODB.collection("news");
 
     let news = match collection.find_one(doc! {"_id": path.into_inner()}, None).await.unwrap() {
@@ -79,7 +79,7 @@ pub async fn news_details(path: web::Path<String>) -> impl Responder {
 }
 
 #[post("/news")]
-pub async fn news_create(body: web::Json<NewsCreateRequest>) -> impl Responder {
+pub async fn news_post(body: web::Json<NewsCreateRequest>) -> impl Responder {
     let collection: Collection<NewsInfo> = MONGODB.collection("news");
     let info = &body.info;
     let token = &body.token;

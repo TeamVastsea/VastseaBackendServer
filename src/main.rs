@@ -46,13 +46,13 @@ async fn main() -> std::io::Result<()> {
             .service(ping)
             .service(user::user_get)
             .service(news::news_get)
-            .service(news::news_details)
-            .service(news::news_create)
+            .service(news::news_id_get)
+            .service(news::news_post)
             .service(api::user_patch)
             .service(api::user_put)
             .service(api::user_qq_get)
             .service(api::user_luck_get)
-            .service(github::github_push)
+            .service(github::github_post)
     });
 
     let tls = CONFIG.connection.tls;

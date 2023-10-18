@@ -5,7 +5,7 @@ use amqprs::connection::{Connection, OpenConnectionArguments};
 use crate::{CONFIG};
 
 #[post("/github")]
-pub async fn github_push(payload: web::Bytes) -> impl Responder {
+pub async fn github_post(payload: web::Bytes) -> impl Responder {
     let args: OpenConnectionArguments = CONFIG.rabbitmq.uri.as_str().try_into().unwrap();
     let connection = Connection::open(&args).await.unwrap();
 
