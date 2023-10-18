@@ -6,8 +6,12 @@ use serde::{Deserialize, Serialize};
 use hyper::{Body, Client, Request, body, http::HeaderValue};
 use lazy_static::lazy_static;
 use serde_json::{from_str};
+use urlencoding::encode;
+use crate::CONFIG;
+
 lazy_static! {
-    pub static ref AUTHORIZE: String=String::from("https://login.live.com/oauth20_authorize.srf?client_id=000000004C12AE6F&redirect_uri=https://login.live.com/oauth20_desktop.srf&scope=service::user.auth.xboxlive.com::MBI_SSL&display=touch&response_type=token&locale=en");
+    pub static ref REDIRECT_URL: String = encode(&CONFIG.oauth.redirect_url).into_owned();
+    pub static ref AUTHORIZE: String=format!("https://login.live.com/oauth20_authorize.srf?client_id={}&redirect_uri={}&scope=service::user.auth.xboxlive.com::MBI_SSL&display=touch&response_type=token&locale=en", CONFIG.oauth.client_id, REDIRECT_URL.clone());
     pub static ref XBL: String=String::from("https://user.auth.xboxlive.com/user/authenticate");
     pub static ref XSTS: String=String::from("https://xsts.auth.xboxlive.com/xsts/authorize");
     pub static ref USERAGENT: String=String::from("Mozilla/5.0 (XboxReplay; XboxLiveAuth/3.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36");

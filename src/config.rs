@@ -25,6 +25,8 @@ pub struct ServerConfig {
     pub mongodb: MongodbSetting,
     #[serde(default = "generate_rabbitmq_setting")]
     pub rabbitmq: RabbitmqSetting,
+    #[serde(default = "generate_oauth_setting")]
+    pub oauth: OAuthSetting,
 }
 
 #[serde_inline_default]
@@ -64,6 +66,15 @@ pub struct RabbitmqSetting {
     pub queue_name: String,
 }
 
+#[serde_inline_default]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OAuthSetting {
+    #[serde_inline_default(String::from("646004c1-0054-4157-b5b5-4cb89f6eaa1a"))]
+    pub client_id: String,
+    #[serde_inline_default(String::from("https://mccteam.github.io/redirect.html"))]
+    pub redirect_url: String,
+}
+
 fn generate_default_user_group() -> Vec<String> {
     vec!["default".to_string()]
 }
@@ -79,6 +90,13 @@ fn generate_connect_setting() -> ConnectionSetting {
         server_port: 7890,
         ssl_cert: "./cert.crt".to_string(),
         ssl_key: "./private.key".to_string(),
+    }
+}
+
+fn generate_oauth_setting() -> OAuthSetting {
+    OAuthSetting {
+        client_id: "646004c1-0054-4157-b5b5-4cb89f6eaa1a".to_string(),
+        redirect_url: "https://mccteam.github.io/redirect.html".to_string(),
     }
 }
 

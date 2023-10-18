@@ -8,8 +8,7 @@ pub static LOGIN_WITH_XBOX: &str = "https://api.minecraftservices.com/authentica
 pub static OWNERSHIP: &str = "https://api.minecraftservices.com/entitlements/mcstore";
 pub static PROFILE: &str = "https://api.minecraftservices.com/minecraft/profile";
 
-pub async fn login_with_xbox(user_hash: String, xsts_token: String) -> Result<String, String>
-{
+pub async fn login_with_xbox(user_hash: String, xsts_token: String) -> Result<String, String> {
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, Body>(https);
     let mut request_builder = Request::builder().method("POST");
@@ -38,8 +37,7 @@ pub async fn login_with_xbox(user_hash: String, xsts_token: String) -> Result<St
 }
 
 
-pub async fn user_has_game(access_token: String) -> Result<bool, String>
-{
+pub async fn user_has_game(access_token: String) -> Result<bool, String> {
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, Body>(https);
     let mut request_builder = Request::builder().method("GET");
@@ -67,8 +65,7 @@ pub async fn user_has_game(access_token: String) -> Result<bool, String>
     return Ok(!items.is_empty());
 }
 
-pub async fn get_user_profile(access_token: String) -> Result<UserMCProfile, String>
-{
+pub async fn get_user_profile(access_token: String) -> Result<UserMCProfile, String> {
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, Body>(https);
     let mut request_builder = Request::builder().method("GET");
