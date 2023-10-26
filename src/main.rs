@@ -18,6 +18,7 @@ use mongodb::bson::doc;
 use serde_json::{json, Value};
 use shadow_rs::shadow;
 use simple_log::{debug, info, LogConfigBuilder};
+use tower_http::catch_panic::CatchPanicLayer;
 use crate::api::{user_ban_put, user_bind_qq_patch, user_luck_get, user_qq_get};
 use crate::config::ServerConfig;
 use crate::github::github_post_receive;
@@ -54,7 +55,9 @@ async fn main() -> std::io::Result<()> {
         .route("/user/luck", get(user_luck_get))
         .route("/news", get(news_get))
         .route("/news/:id", get(news_id_get))
-        .route("/github", post(github_post_receive));
+        .route("/github", post(github_post_receive))
+        .route("/panic", get(panic))
+        .layer(CatchPanicLayer::new());
 
     let addr = CONFIG.connection.server_url.parse().unwrap();
     info!("Listening: {addr}");
@@ -103,4 +106,9 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 async fn ping() -> Json<Value> {
     shadow!(build);
     Json(json! ({"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}))
+}
+
+async fn panic() {
+    let a: Option<i32> = None;
+    let b = a.unwrap();
 }
