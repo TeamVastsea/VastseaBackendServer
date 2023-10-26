@@ -1,16 +1,18 @@
-mod news_file;
-
-use actix_web::{get, HttpResponse, post, Responder, web};
-use actix_web::web::Query;
+use axum::extract::{Path, Query};
+use axum::Json;
 use bson::doc;
 use bson::oid::ObjectId;
 use chrono::Utc;
 use futures_util::StreamExt;
+use hyper::StatusCode;
 use mongodb::Collection;
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
+
 use crate::MONGODB;
 use crate::user::UserInfo;
+
+mod news_file;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewsInfo {
@@ -40,15 +42,14 @@ pub struct GetNewsQueue {
     size: Option<u8>,
 }
 
-#[get("/news")]
-pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder {
+pub async fn news_get(queue: Query<GetNewsQueue>) -> Result<String, StatusCode> {
     let page = queue.page;
     let size = match queue.size {
         None => { 10 }
         Some(a) => { a }
     };
     if page < 1 || size > 15 {
-        return HttpResponse::BadRequest().body("Page or size out of range.");
+        return Err(StatusCode::BAD_REQUEST);
     }
     let skip = size * (page - 1);
     let limit = size;
@@ -63,35 +64,33 @@ pub async fn news_get(queue: Query<GetNewsQueue>) -> impl Responder {
         news.push(doc.unwrap());
     }
 
-    return HttpResponse::Ok().body(serde_json::to_string(&news).unwrap());
+    return Ok(serde_json::to_string(&news).unwrap());
 }
 
-#[get("/news/{id}")]
-pub async fn news_details(path: web::Path<String>) -> impl Responder {
+pub async fn news_id_get(Path(id): Path<i32>) -> Result<String, StatusCode> {
     let collection: Collection<NewsInfo> = MONGODB.collection("news");
 
-    let news = match collection.find_one(doc! {"_id": path.into_inner()}, None).await.unwrap() {
-        None => { return HttpResponse::NotFound().body("ID not found"); }
+    let news = match collection.find_one(doc! {"_id": id}, None).await.unwrap() {
+        None => { return Err(StatusCode::NOT_FOUND); }
         Some(a) => { a }
     };
     let document = news.get_body().await;
-    return HttpResponse::Ok().body(document);
+    return Ok(document);
 }
 
-#[post("/news")]
-pub async fn news_create(body: web::Json<NewsCreateRequest>) -> impl Responder {
+pub async fn news_post(body: Json<NewsCreateRequest>) -> Result<String, StatusCode> {
     let collection: Collection<NewsInfo> = MONGODB.collection("news");
     let info = &body.info;
     let token = &body.token;
     let body = &body.body;
 
-    let user = match UserInfo::from_token(token.to_string()).await {
+    let user = match UserInfo::from_token(token).await {
         Ok(a) => { a }
-        Err(_) => { return HttpResponse::Unauthorized(); }
+        Err(_) => { return Err(StatusCode::UNAUTHORIZED); }
     };
 
     if !user.group.contains(&"admin".to_string()) {
-        return HttpResponse::Unauthorized();
+        return Err(StatusCode::UNAUTHORIZED);
     }
 
     let info = NewsInfo {
@@ -104,8 +103,8 @@ pub async fn news_create(body: web::Json<NewsCreateRequest>) -> impl Responder {
     collection.insert_one(&info, None).await.unwrap();
 
     return if info.save_body(body.to_string()).await.is_err() {
-        HttpResponse::InternalServerError()
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
     } else {
-        HttpResponse::Ok()
+        Ok(String::new())
     };
 }

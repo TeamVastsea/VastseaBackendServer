@@ -1,7 +1,7 @@
-mod start;
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+
+mod start;
 
 #[derive(Serialize, Deserialize)]
 struct SurveyAnswer {

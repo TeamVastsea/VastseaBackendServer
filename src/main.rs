@@ -1,79 +1,78 @@
+use std::fs;
+use std::io::BufReader;
+
+use axum::{Json, Router};
+use axum::routing::{get, patch, post, put};
+use axum_server::tls_rustls::RustlsConfig;
+use lazy_static::lazy_static;
+use mongodb::bson::doc;
+use mongodb::Database;
+use serde_json::{json, Value};
+use shadow_rs::shadow;
+use tower_http::catch_panic::CatchPanicLayer;
+use tracing::{debug, info};
+use tracing_appender::{non_blocking, rolling};
+use tracing_subscriber::{EnvFilter, fmt, Registry};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+
+use crate::api::{user_ban_put, user_bind_qq_patch, user_luck_get, user_qq_get};
+use crate::config::ServerConfig;
+use crate::github::github_post_receive;
+use crate::news::{news_get, news_id_get};
+use crate::user::user_get;
+
 mod config;
 mod user;
 mod api;
 mod survey;
-mod utils;
 mod news;
 mod github;
-
-use std::fs;
-use std::io::BufReader;
-use actix_web::{App, HttpResponse, HttpServer, Responder, get};
-use chrono::{Local};
-use lazy_static::lazy_static;
-use mongodb::Database;
-use mongodb::bson::doc;
-use shadow_rs::shadow;
-use simple_log::{info, LogConfigBuilder};
-use crate::config::ServerConfig;
+mod utils;
 
 lazy_static! {
     static ref CONFIG: ServerConfig = config::get_log();
     static ref MONGODB: Database = config::get_mongodb();
 }
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let mut file_name = "./log/".to_owned();
-    file_name += &Local::now().format("%Y-%m-%d.%H-%M-%S").to_string();
-    file_name += ".log";
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"));
 
-    let config = LogConfigBuilder::builder()
-        .path(&file_name)
-        .size(1 * 100)
-        .roll_count(10)
-        .time_format("%Y-%m-%d %H:%M:%S.%f") //E.g:%H:%M:%S.%f
-        .level("debug")
-        .output_file()
-        .output_console()
-        .build();
-    simple_log::new(config).expect("Cannot init logger");
+    let formatting_layer = fmt::layer().with_writer(std::io::stderr);
+    let file_appender = rolling::daily("log", "log");
+    let (non_blocking_appender, _guard) = non_blocking(file_appender);
+    let file_layer = fmt::layer()
+        .with_ansi(false)
+        .with_writer(non_blocking_appender);
+    Registry::default()
+        .with(env_filter)
+        .with(formatting_layer)
+        .with(file_layer)
+        .init();
 
-    //start server
-    let server = HttpServer::new(|| {
-        App::new()
-            .wrap(actix_web::middleware::Logger::new("%a %r -> %s with in %Dms, %bb"))
-            .service(ping)
-            .service(user::user_get)
-            .service(news::news_get)
-            .service(news::news_details)
-            .service(news::news_create)
-            .service(api::user_patch)
-            .service(api::user_put)
-            .service(api::user_qq_get)
-            .service(api::user_luck_get)
-            .service(github::github_push)
-    });
+    let app = Router::new()
+        .route("/user", get(user_get))
+        .route("/user", put(user_ban_put))
+        .route("/user", patch(user_bind_qq_patch))
+        .route("/user/qq", get(user_qq_get))
+        .route("/user/luck", get(user_luck_get))
+        .route("/news", get(news_get))
+        .route("/news/:id", get(news_id_get))
+        .route("/github", post(github_post_receive))
+        .layer(CatchPanicLayer::new());
 
-    let tls = CONFIG.connection.tls;
-    if !tls {
-        info!("Listening: http://{}:{}", &CONFIG.connection.server_ip, CONFIG.connection.server_port);
-        server.bind((CONFIG.connection.server_ip.to_string(), CONFIG.connection.server_port)).expect("Can not bind server to port").run().await.expect("Can not start server");
+    let addr = CONFIG.connection.server_url.parse().unwrap();
+    info!("Listening: {addr}");
+
+    if CONFIG.connection.tls {
+        info!("HTTPS enabled.");
+        let tls_config = RustlsConfig::from_pem_file(CONFIG.connection.ssl_cert.clone(), CONFIG.connection.ssl_key.clone()).await.unwrap();
+        axum_server::bind_rustls(addr, tls_config).serve(app.into_make_service()).await.unwrap();
     } else {
-        info!("Loading certs...");
-        let certs = load_certs(&CONFIG.connection.ssl_cert);
-        let private_key = load_private_key(&CONFIG.connection.ssl_cert);
-
-        let config = rustls::ServerConfig::builder()
-            .with_safe_defaults()
-            .with_no_client_auth()
-            .with_single_cert(certs, private_key)
-            .expect("bad certificate/key");
-
-        info!("Listening: https://{}:{}", &CONFIG.connection.server_ip, CONFIG.connection.server_port);
-        server.bind_rustls((CONFIG.connection.server_ip.to_string(), CONFIG.connection.server_port), config).expect("Can not bind server to port").run().await.expect("Can not start server");
+        debug!("HTTPS disabled.");
+        axum_server::bind(addr).serve(app.into_make_service()).await.unwrap();
     }
-
     Ok(())
 }
 
@@ -107,8 +106,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
     );
 }
 
-#[get("/ping")]
-async fn ping() -> impl Responder {
+async fn ping() -> Json<Value> {
     shadow!(build);
-    HttpResponse::Ok().body(doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string())
+    Json(json!({"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}))
 }

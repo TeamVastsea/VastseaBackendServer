@@ -1,11 +1,10 @@
-use std::borrow::Cow;
-use actix_web::{get, HttpRequest, HttpResponse, Responder};
+use std::collections::HashMap;
 
-use mongodb::bson::{doc};
+use axum::extract::Query;
+use axum::http::StatusCode;
+use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use url_encoded_data::UrlEncodedData;
-
 
 pub mod microsoft;
 pub mod xbox;
@@ -29,10 +28,7 @@ pub struct UserMCProfile {
     pub user_name: String,
 }
 
-#[get("/users")]
-pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
-    let uri = req.uri().to_string();
-    let uri_encoded = UrlEncodedData::from(uri.as_str());
+pub async fn user_get(query: Query<HashMap<String, String>>) -> Result<String, (StatusCode, String)> {
     let mut method = "";
     let mut user_info: UserInfo = UserInfo {
         _id: "".to_string(),
@@ -43,60 +39,57 @@ pub async fn user_get(req: HttpRequest, _req_body: String) -> impl Responder {
         ban_reason: None,
     };
 
-    if uri_encoded.keys().contains(&"code") {
+    if let Some(code) = query.get("code") {
         method = "code";
-        let code = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("code")).unwrap().to_string();
         let mc_profile = match UserMCProfile::from_code(code).await {
             Ok(a) => a,
             Err(err) => {
-                return HttpResponse::InternalServerError().body(err);
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Cannot get user mc profile: {err}")));
             }
         };
         user_info = match UserInfo::from_mc_profile(mc_profile).await {
             Ok(a) => a,
             Err(err) => {
-                return HttpResponse::InternalServerError().body(err);
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, err))
             }
         }
     }
-    if uri_encoded.keys().contains(&"atoken") {
+    if let Some(code) = query.get("atoken") {
         method = "atoken";
-        let code = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("atoken")).unwrap().to_string();
         let mc_profile = match UserMCProfile::from_access_token(code).await {
             Ok(a) => a,
             Err(err) => {
-                return HttpResponse::InternalServerError().body(err);
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, err));
             }
         };
         user_info = match UserInfo::from_mc_profile(mc_profile).await {
             Ok(a) => a,
             Err(err) => {
-                return HttpResponse::InternalServerError().body(err);
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, err));
             }
         }
     }
-    if uri_encoded.keys().contains(&"htoken") {
+    if let Some(token) = query.get("htoken") {
         method = "htoken";
-        let token = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("htoken")).unwrap().to_string();
         user_info = match UserInfo::from_token(token).await {
             Ok(a) => a,
             Err(err) => {
-                return HttpResponse::InternalServerError().body(err);
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, err));
             }
         };
     }
 
     if method == "" {
-        return HttpResponse::BadRequest().body("Missing args");
+        return Err((StatusCode::BAD_REQUEST, String::from("missing args")));
     }
 
     let mut result = serde_json::to_value(user_info.clone()).unwrap();
 
-    if let Some(a) = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("token")) {
-        if a.to_string() == "true" {
+    if let Some(a) = query.get("token") {
+        if a == "true" {
             result["token"] = Value::from(user_info.to_token().await);
         }
     };
 
-    return HttpResponse::Ok().body(result.to_string());
+    return Ok(result.to_string());
 }

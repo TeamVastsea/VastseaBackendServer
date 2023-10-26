@@ -2,18 +2,19 @@ use std::fs::OpenOptions;
 use std::io;
 use std::io::{Read, Write};
 use std::process::exit;
+
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use bson::doc;
 use chrono::{DateTime, Months, Utc};
 use futures::executor::block_on;
-use jwt_simple::prelude::HS256Key;
-use mongodb::{Database, Client, Collection, Cursor};
-use mongodb::options::ClientOptions;
-use serde::{Deserialize, Serialize};
 use futures_util::stream::StreamExt;
+use jwt_simple::prelude::HS256Key;
 use lazy_static::lazy_static;
+use mongodb::{Client, Collection, Cursor, Database};
+use mongodb::options::ClientOptions;
 use prettytable::{Cell, row, Row, Table};
+use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -1,31 +1,32 @@
+use base64::Engine;
 use jwt_simple::prelude::{Claims, Duration, HS256Key, MACLike};
-use base64::{Engine};
 use mongodb::bson::doc;
 use mongodb::Collection;
-use crate::{MONGODB, CONFIG};
+
+use crate::{CONFIG, MONGODB};
 use crate::user::{UserInfo, UserMCProfile};
-use crate::user::microsoft::{request_access_token};
+use crate::user::microsoft::request_access_token;
 use crate::user::minecraft::{get_user_profile, login_with_xbox, user_has_game};
 use crate::user::xbox::{xbl_authenticate, xsts_authenticate};
 
 impl UserMCProfile {
-    pub async fn from_code(code: String) -> Result<UserMCProfile, String> {
+    pub async fn from_code(code: &str) -> Result<UserMCProfile, String> {
         let response = match request_access_token(code).await {
             Ok(a) => a,
             Err(err) => { return Err(err); }
         };
-        UserMCProfile::complete_login(response.access_token.unwrap()).await
+        UserMCProfile::complete_login(&response.access_token.unwrap()).await
     }
 
-    pub async fn from_access_token(access_token: String) -> Result<UserMCProfile, String> {
+    pub async fn from_access_token(access_token: &str) -> Result<UserMCProfile, String> {
         return match UserMCProfile::complete_login(access_token).await {
             Ok(a) => Ok(a),
             Err(e) => Err(e)
         };
     }
 
-    async fn complete_login(access_token: String) -> Result<UserMCProfile, String> {
-        let xbl_response = match xbl_authenticate(access_token, true).await {
+    async fn complete_login(access_token: &str) -> Result<UserMCProfile, String> {
+        let xbl_response = match xbl_authenticate(access_token.to_string(), true).await {
             Ok(a) => a,
             Err(e) => {
                 return Err(format!("Cannot get xbl ({})", e));
@@ -86,7 +87,7 @@ impl UserInfo {
         }
     }
 
-    pub async fn from_uuid(uuid: String) -> Result<Self, String> {
+    pub async fn from_uuid(uuid: &str) -> Result<Self, String> {
         let collection: Collection<UserInfo> = MONGODB.collection("users");
         return match collection.find_one(doc! {"_id": &uuid}, None).await.unwrap() {
             Some(a) => {
@@ -115,7 +116,7 @@ impl UserInfo {
         key.authenticate(claim).unwrap()
     }
 
-    pub async fn from_token(token: String) -> Result<UserInfo, String> {
+    pub async fn from_token(token: &str) -> Result<UserInfo, String> {
         let key = HS256Key::from_bytes(base64::engine::general_purpose::STANDARD.decode(&CONFIG.token_key).unwrap().as_slice());
         let claims = key.verify_token::<UserInfo>(&token, None);
         match claims {
