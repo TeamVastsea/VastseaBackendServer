@@ -3,10 +3,10 @@ mod key;
 mod ban;
 mod luck;
 
-use std::borrow::Cow;
-use actix_web::{HttpRequest, HttpResponse, patch, put, get, Responder};
+use std::collections::HashMap;
+use axum::extract::Query;
+use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
-use url_encoded_data::UrlEncodedData;
 use serde::{Deserialize, Serialize};
 use crate::api::ban::{ban_user, ban_user_qq};
 use crate::api::bind::bind_qq;
@@ -24,148 +24,124 @@ pub struct ApiKey {
     pub nat: DateTime<Utc>,
 }
 
-#[patch("/users")]
-pub async fn user_patch(req: HttpRequest) -> impl Responder {
-    let uri = req.uri().to_string();
-    let uri_encoded = UrlEncodedData::from(uri.as_str());
-
-    if !uri_encoded.exists("uuid") || !uri_encoded.exists("qq") || !uri_encoded.exists("key") {
-        return HttpResponse::BadRequest().body("Missing argument(s).");
+pub async fn user_bind_qq_patch(query: Query<HashMap<String, String>>) -> Result<String, (StatusCode, String)> {
+    if !query.contains_key("uuid") || !query.contains_key("qq") || !query.contains_key("key") {
+        return Err((StatusCode::BAD_REQUEST, "Missing arguments.".to_string()));
     }
 
-    let uuid = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("name")).unwrap().to_string();
-    let qq = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("qq")).unwrap().to_string();
+    let uuid = query.get("uuid").unwrap();
+    let qq = query.get("qq").unwrap();
     let qq = match qq.parse::<i64>() {
         Ok(a) => { a }
         Err(err) => {
-            return HttpResponse::BadRequest().body("Cannot parse qq: ".to_string() + err.to_string().as_str());
+            return Err((StatusCode::BAD_REQUEST, "Cannot parse qq: ".to_string() + err.to_string().as_str()));
         }
     };
-    let key = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("key")).unwrap().to_string();
+    let key = query.get("key").unwrap();
     if examine_key(key).await.is_err() {
-        return HttpResponse::Unauthorized().body("Wrong key.");
+        return Err((StatusCode::UNAUTHORIZED, "Invalid key.".to_string()));
     }
 
-    return match bind_qq(uuid, qq).await {
-        Ok(_) => {
-            HttpResponse::Ok().body("")
-        }
-        Err(_) => {
-            HttpResponse::InternalServerError().body("User not found or already bound.")
-        }
+    return if bind_qq(uuid, qq).await {
+        Ok(String::new())
+    } else {
+        Err((StatusCode::INTERNAL_SERVER_ERROR, "User not found or already bound.".to_string()))
     };
 }
 
-#[put("/users")]
-pub async fn user_put(req: HttpRequest) -> impl Responder {
-    let uri = req.uri().to_string();
-    let uri_encoded = UrlEncodedData::from(uri.as_str());
-
-    if !((uri_encoded.exists("uuid") || uri_encoded.exists("qq")) && uri_encoded.exists("key")) {
-        return HttpResponse::BadRequest().body("Missing argument(s).");
+pub async fn user_ban_put(query: Query<HashMap<String, String>>) -> Result<String, (StatusCode, String)> {
+    if !((query.contains_key("uuid") || query.contains_key("qq")) && query.contains_key("key")) {
+        return Err((StatusCode::BAD_REQUEST, "Missing arguments.".to_string()));
     }
-    let key = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("key")).unwrap().to_string();
+    let key = query.get("key").unwrap();
 
-    let reason = if uri_encoded.exists("reason") {
-        uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("reason")).unwrap().to_string()
-    } else {
-        "".to_string()
+    let reason = match query.get("reason") {
+        None => { "" }
+        Some(r) => { r }
     };
 
     if examine_key(key).await.is_err() {
-        return HttpResponse::Unauthorized().body("Wrong key.");
+        return Err((StatusCode::UNAUTHORIZED, "Invalid key.".to_string()));
     }
 
-    return if uri_encoded.exists("uuid") {
-        let uuid = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("uuid")).unwrap().to_string();
-        match ban_user(uuid, reason).await {
-            Ok(_) => {
-                HttpResponse::Ok().body("")
-            }
-            Err(_) => {
-                HttpResponse::InternalServerError().body("User not found or already disabled.")
-            }
+    return if query.contains_key("uuid") { //search by uuid
+        let uuid = query.get("uuid").unwrap();
+        if ban_user(uuid, reason).await {
+            Ok(String::new())
+        } else {
+            Err((StatusCode::INTERNAL_SERVER_ERROR, "User not found or already disabled.".to_string()))
         }
     } else {
-        let qq = match uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("qq")).unwrap().to_string().parse::<i64>() {
+        let qq = match query.get("qq").unwrap().parse::<i64>() { //search by qq
             Ok(a) => a,
             Err(err) => {
-                return HttpResponse::InternalServerError().body("cannot parse qq: ".to_string() + err.to_string().as_str() + ".");
+                return Err((StatusCode::BAD_REQUEST, "Cannot parse qq: ".to_string() + err.to_string().as_str()));
             }
         };
-        match ban_user_qq(qq, reason).await {
-            Ok(_) => {
-                HttpResponse::Ok().body("")
-            }
-            Err(_) => {
-                HttpResponse::InternalServerError().body("User not found or already disabled.")
-            }
+        if ban_user_qq(qq, reason).await {
+            Ok(String::new())
+        } else {
+            Err((StatusCode::INTERNAL_SERVER_ERROR, "User not found or already disabled.".to_string()))
         }
     };
 }
 
-#[get("/user/qq")]
-pub async fn user_qq_get(req: HttpRequest) -> impl Responder {
-    let uri = req.uri().to_string();
-    let uri_encoded = UrlEncodedData::from(uri.as_str());
+pub async fn user_qq_get(query: Query<HashMap<String, String>>) -> Result<String, (StatusCode, String)> {
 
-    if !uri_encoded.exists("uuid") || !uri_encoded.exists("key") {
-        return HttpResponse::BadRequest().body("Missing argument(s).");
+    if !query.contains_key("uuid") || !query.contains_key("key") {
+        return Err((StatusCode::BAD_REQUEST, "Missing arguments.".to_string()));
     }
 
-    let key = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("key")).unwrap().to_string();
+    let key = query.get("key").unwrap();
 
     if examine_key(key).await.is_err() {
-        return HttpResponse::Unauthorized().body("Wrong key.");
+        return Err((StatusCode::UNAUTHORIZED, "Invalid key.".to_string()));
     }
 
-    let uuid = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("uuid")).unwrap().to_string();
+    let uuid = query.get("uuid").unwrap();
 
     let user = match UserInfo::from_uuid(uuid).await {
         Ok(a) => a,
         Err(err) => {
-            return HttpResponse::InternalServerError().body(err);
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, err));
         }
     };
 
     return match user.bind_qq {
         None => {
-            HttpResponse::InternalServerError().body("User haven't bind yet.")
+            Err((StatusCode::INTERNAL_SERVER_ERROR, "User have not bound yet.".to_string()))
         }
         Some(a) => {
-            HttpResponse::Ok().body(a.to_string())
+            Ok(a.to_string())
         }
     };
 }
 
-#[get("/user/luck")]
-pub async fn user_luck_get(req: HttpRequest) -> impl Responder {
-    let uri = req.uri().to_string();
-    let uri_encoded = UrlEncodedData::from(uri.as_str());
+pub async fn user_luck_get(query: Query<HashMap<String, String>>) -> Result<String, (StatusCode, String)> {
 
-    if !uri_encoded.exists("uuid") || !uri_encoded.exists("key") {
-        return HttpResponse::BadRequest().body("Missing argument(s).");
+    if !query.contains_key("uuid") || !query.contains_key("key") {
+        return Err((StatusCode::BAD_REQUEST, "Missing arguments.".to_string()));
     }
 
-    let key = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("key")).unwrap().to_string();
+    let key = query.get("key").unwrap();
 
     if examine_key(key).await.is_err() {
-        return HttpResponse::Unauthorized().body("Wrong key.");
+        return Err((StatusCode::UNAUTHORIZED, "Invalid key.".to_string()));
     }
 
-    let uuid = uri_encoded.as_map_of_single_key_to_first_occurrence_value().get(&Cow::from("uuid")).unwrap().to_string();
+    let uuid = query.get("uuid").unwrap();
 
     let user = match UserInfo::from_uuid(uuid).await {
         Ok(a) => a,
-        Err(err) => {
-            return HttpResponse::InternalServerError().body(err);
+        Err(_) => {
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, "User have not bound yet.".to_string()));
         }
     };
 
     if user.bind_qq.is_none() {
-        return HttpResponse::InternalServerError().body("user have not bind yet.");
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, "User have not bound yet.".to_string()));
     }
     let luck = calc_luck(user.bind_qq.unwrap().to_string());
 
-    HttpResponse::Ok().body(luck.to_string())
+    Ok(luck.to_string())
 }

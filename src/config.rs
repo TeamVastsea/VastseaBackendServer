@@ -27,6 +27,8 @@ pub struct ServerConfig {
     pub rabbitmq: RabbitmqSetting,
     #[serde(default = "generate_oauth_setting")]
     pub oauth: OAuthSetting,
+    #[serde(default = "generate_luck_gen_setting")]
+    pub luck: LuckGenSetting,
 }
 
 #[serde_inline_default]
@@ -34,10 +36,8 @@ pub struct ServerConfig {
 pub struct ConnectionSetting {
     #[serde_inline_default(false)]
     pub tls: bool,
-    #[serde_inline_default(7890)]
-    pub server_port: u16,
-    #[serde_inline_default(String::from("0.0.0.0"))]
-    pub server_ip: String,
+    #[serde_inline_default(String::from("0.0.0.0:7890"))]
+    pub server_url: String,
     #[serde_inline_default(String::from("./cert.crt"))]
     pub ssl_cert: String,
     #[serde_inline_default(String::from("./private.key"))]
@@ -75,6 +75,17 @@ pub struct OAuthSetting {
     pub redirect_url: String,
 }
 
+#[serde_inline_default]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LuckGenSetting {
+    #[serde_inline_default(1)]
+    pub m: u64,
+    #[serde_inline_default(2)]
+    pub a: u64,
+    #[serde_inline_default(3)]
+    pub c: u64,
+}
+
 fn generate_default_user_group() -> Vec<String> {
     vec!["default".to_string()]
 }
@@ -86,8 +97,7 @@ fn generate_default_key() -> String {
 fn generate_connect_setting() -> ConnectionSetting {
     ConnectionSetting {
         tls: false,
-        server_ip: "0.0.0.0".to_string(),
-        server_port: 7890,
+        server_url: "0.0.0.0:7890".to_string(),
         ssl_cert: "./cert.crt".to_string(),
         ssl_key: "./private.key".to_string(),
     }
@@ -113,6 +123,14 @@ fn generate_rabbitmq_setting() -> RabbitmqSetting {
         rounting_key: "amqprs.example".to_string(),
         exchange_name: "amq.topic".to_string(),
         queue_name: "github".to_string(),
+    }
+}
+
+fn generate_luck_gen_setting() -> LuckGenSetting {
+    LuckGenSetting {
+        m: 1,
+        a: 2,
+        c: 3,
     }
 }
 

@@ -2,27 +2,34 @@ mod config;
 mod user;
 mod api;
 mod survey;
-mod utils;
 mod news;
 mod github;
+mod utils;
 
 use std::fs;
 use std::io::BufReader;
-use actix_web::{App, HttpResponse, HttpServer, Responder, get};
+use axum::{Json, Router, ServiceExt};
+use axum::routing::{get, patch, post, put};
+use axum_server::tls_rustls::RustlsConfig;
 use chrono::{Local};
 use lazy_static::lazy_static;
 use mongodb::Database;
 use mongodb::bson::doc;
+use serde_json::{json, Value};
 use shadow_rs::shadow;
-use simple_log::{info, LogConfigBuilder};
+use simple_log::{debug, info, LogConfigBuilder};
+use crate::api::{user_ban_put, user_bind_qq_patch, user_luck_get, user_qq_get};
 use crate::config::ServerConfig;
+use crate::github::github_post_receive;
+use crate::news::{news_get, news_id_get};
+use crate::user::user_get;
 
 lazy_static! {
     static ref CONFIG: ServerConfig = config::get_log();
     static ref MONGODB: Database = config::get_mongodb();
 }
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     let mut file_name = "./log/".to_owned();
     file_name += &Local::now().format("%Y-%m-%d.%H-%M-%S").to_string();
@@ -39,41 +46,27 @@ async fn main() -> std::io::Result<()> {
         .build();
     simple_log::new(config).expect("Cannot init logger");
 
-    //start server
-    let server = HttpServer::new(|| {
-        App::new()
-            .wrap(actix_web::middleware::Logger::new("%a %r -> %s with in %Dms, %bb"))
-            .service(ping)
-            .service(user::user_get)
-            .service(news::news_get)
-            .service(news::news_id_get)
-            .service(news::news_post)
-            .service(api::user_patch)
-            .service(api::user_put)
-            .service(api::user_qq_get)
-            .service(api::user_luck_get)
-            .service(github::github_post)
-    });
+    let app = Router::new()
+        .route("/user", get(user_get))
+        .route("/user", put(user_ban_put))
+        .route("/user", patch(user_bind_qq_patch))
+        .route("/user/qq", get(user_qq_get))
+        .route("/user/luck", get(user_luck_get))
+        .route("/news", get(news_get))
+        .route("/news/:id", get(news_id_get))
+        .route("/github", post(github_post_receive));
 
-    let tls = CONFIG.connection.tls;
-    if !tls {
-        info!("Listening: http://{}:{}", &CONFIG.connection.server_ip, CONFIG.connection.server_port);
-        server.bind((CONFIG.connection.server_ip.to_string(), CONFIG.connection.server_port)).expect("Can not bind server to port").run().await.expect("Can not start server");
+    let addr = CONFIG.connection.server_url.parse().unwrap();
+    info!("Listening: {addr}");
+
+    if CONFIG.connection.tls {
+        info!("HTTPS enabled.");
+        let tls_config = RustlsConfig::from_pem_file(CONFIG.connection.ssl_cert.clone(), CONFIG.connection.ssl_key.clone()).await.unwrap();
+        axum_server::bind_rustls(addr, tls_config).serve(app.into_make_service()).await.unwrap();
     } else {
-        info!("Loading certs...");
-        let certs = load_certs(&CONFIG.connection.ssl_cert);
-        let private_key = load_private_key(&CONFIG.connection.ssl_cert);
-
-        let config = rustls::ServerConfig::builder()
-            .with_safe_defaults()
-            .with_no_client_auth()
-            .with_single_cert(certs, private_key)
-            .expect("bad certificate/key");
-
-        info!("Listening: https://{}:{}", &CONFIG.connection.server_ip, CONFIG.connection.server_port);
-        server.bind_rustls((CONFIG.connection.server_ip.to_string(), CONFIG.connection.server_port), config).expect("Can not bind server to port").run().await.expect("Can not start server");
+        debug!("HTTPS disabled.");
+        axum_server::bind(addr).serve(app.into_make_service()).await.unwrap();
     }
-
     Ok(())
 }
 
@@ -107,8 +100,7 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
     );
 }
 
-#[get("/ping")]
-async fn ping() -> impl Responder {
+async fn ping() -> Json<Value> {
     shadow!(build);
-    HttpResponse::Ok().body(doc! {"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}.to_string())
+    Json(json! ({"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}))
 }

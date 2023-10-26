@@ -31,7 +31,7 @@ pub struct JwtPayload
 }
 
 #[allow(dead_code)]
-pub async fn request_access_token(code: String) -> Result<LoginResponse, String> {
+pub async fn request_access_token(code: &str) -> Result<LoginResponse, String> {
     request_token(format!("client_id={}&grant_type=authorization_code&redirect_uri={}&code={}", CONFIG.oauth.client_id, REDIRECT_URL.clone(), code)).await
 }
 
