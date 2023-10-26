@@ -16,7 +16,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 use crate::api::{user_ban_put, user_bind_qq_patch, user_luck_get, user_qq_get};
 use crate::config::ServerConfig;
 use crate::github::github_post_receive;
-use crate::news::{news_get, news_id_get};
+use crate::news::{news_get, news_id_get, news_post};
 use crate::user::user_get;
 
 mod config;
@@ -56,6 +56,7 @@ async fn main() -> std::io::Result<()> {
         .route("/user/qq", get(user_qq_get))
         .route("/user/luck", get(user_luck_get))
         .route("/news", get(news_get))
+        .route("/news", post(news_post))
         .route("/news/:id", get(news_id_get))
         .route("/github", post(github_post_receive))
         .layer(CatchPanicLayer::new());
