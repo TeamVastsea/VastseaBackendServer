@@ -1,6 +1,3 @@
-use std::fs;
-use std::io::BufReader;
-
 use axum::{Json, Router};
 use axum::routing::{get, patch, post, put};
 use axum_server::tls_rustls::RustlsConfig;
@@ -52,6 +49,7 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     let app = Router::new()
+        .route("/ping", get(ping))
         .route("/user", get(user_get))
         .route("/user", put(user_ban_put))
         .route("/user", patch(user_bind_qq_patch))
@@ -74,36 +72,6 @@ async fn main() -> std::io::Result<()> {
         axum_server::bind(addr).serve(app.into_make_service()).await.unwrap();
     }
     Ok(())
-}
-
-fn load_certs(filename: &str) -> Vec<rustls::Certificate> {
-    let certfile = fs::File::open(filename).expect("cannot open certificate file");
-    let mut reader = BufReader::new(certfile);
-    rustls_pemfile::certs(&mut reader)
-        .unwrap()
-        .iter()
-        .map(|v| rustls::Certificate(v.clone()))
-        .collect()
-}
-
-fn load_private_key(filename: &str) -> rustls::PrivateKey {
-    let keyfile = fs::File::open(filename).expect("cannot open private key file");
-    let mut reader = BufReader::new(keyfile);
-
-    loop {
-        match rustls_pemfile::read_one(&mut reader).expect("cannot parse private key .pem file") {
-            Some(rustls_pemfile::Item::RSAKey(key)) => return rustls::PrivateKey(key),
-            Some(rustls_pemfile::Item::PKCS8Key(key)) => return rustls::PrivateKey(key),
-            Some(rustls_pemfile::Item::ECKey(key)) => return rustls::PrivateKey(key),
-            None => break,
-            _ => {}
-        }
-    }
-
-    panic!(
-        "no keys found in {:?} (encrypted keys are not supported)",
-        filename
-    );
 }
 
 async fn ping() -> Json<Value> {
