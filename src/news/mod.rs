@@ -1,5 +1,3 @@
-mod news_file;
-
 use axum::extract::{Path, Query};
 use axum::Json;
 use bson::doc;
@@ -10,8 +8,11 @@ use hyper::StatusCode;
 use mongodb::Collection;
 use mongodb::options::FindOptions;
 use serde::{Deserialize, Serialize};
+
 use crate::MONGODB;
 use crate::user::UserInfo;
+
+mod news_file;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewsInfo {

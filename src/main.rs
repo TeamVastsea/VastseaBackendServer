@@ -1,3 +1,27 @@
+use std::fs;
+use std::io::BufReader;
+
+use axum::{Json, Router};
+use axum::routing::{get, patch, post, put};
+use axum_server::tls_rustls::RustlsConfig;
+use lazy_static::lazy_static;
+use mongodb::bson::doc;
+use mongodb::Database;
+use serde_json::{json, Value};
+use shadow_rs::shadow;
+use tower_http::catch_panic::CatchPanicLayer;
+use tracing::{debug, info};
+use tracing_appender::{non_blocking, rolling};
+use tracing_subscriber::{EnvFilter, fmt, Registry};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+
+use crate::api::{user_ban_put, user_bind_qq_patch, user_luck_get, user_qq_get};
+use crate::config::ServerConfig;
+use crate::github::github_post_receive;
+use crate::news::{news_get, news_id_get};
+use crate::user::user_get;
+
 mod config;
 mod user;
 mod api;
@@ -6,25 +30,6 @@ mod news;
 mod github;
 mod utils;
 
-use std::fs;
-use std::io::BufReader;
-use axum::{Json, Router, ServiceExt};
-use axum::routing::{get, patch, post, put};
-use axum_server::tls_rustls::RustlsConfig;
-use chrono::{Local};
-use lazy_static::lazy_static;
-use mongodb::Database;
-use mongodb::bson::doc;
-use serde_json::{json, Value};
-use shadow_rs::shadow;
-use simple_log::{debug, info, LogConfigBuilder};
-use tower_http::catch_panic::CatchPanicLayer;
-use crate::api::{user_ban_put, user_bind_qq_patch, user_luck_get, user_qq_get};
-use crate::config::ServerConfig;
-use crate::github::github_post_receive;
-use crate::news::{news_get, news_id_get};
-use crate::user::user_get;
-
 lazy_static! {
     static ref CONFIG: ServerConfig = config::get_log();
     static ref MONGODB: Database = config::get_mongodb();
@@ -32,20 +37,19 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let mut file_name = "./log/".to_owned();
-    file_name += &Local::now().format("%Y-%m-%d.%H-%M-%S").to_string();
-    file_name += ".log";
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"));
 
-    let config = LogConfigBuilder::builder()
-        .path(&file_name)
-        .size(1 * 100)
-        .roll_count(10)
-        .time_format("%Y-%m-%d %H:%M:%S.%f") //E.g:%H:%M:%S.%f
-        .level("debug")
-        .output_file()
-        .output_console()
-        .build();
-    simple_log::new(config).expect("Cannot init logger");
+    let formatting_layer = fmt::layer().with_writer(std::io::stderr);
+    let file_appender = rolling::daily("log", "log");
+    let (non_blocking_appender, _guard) = non_blocking(file_appender);
+    let file_layer = fmt::layer()
+        .with_ansi(false)
+        .with_writer(non_blocking_appender);
+    Registry::default()
+        .with(env_filter)
+        .with(formatting_layer)
+        .with(file_layer)
+        .init();
 
     let app = Router::new()
         .route("/user", get(user_get))
@@ -56,7 +60,6 @@ async fn main() -> std::io::Result<()> {
         .route("/news", get(news_get))
         .route("/news/:id", get(news_id_get))
         .route("/github", post(github_post_receive))
-        .route("/panic", get(panic))
         .layer(CatchPanicLayer::new());
 
     let addr = CONFIG.connection.server_url.parse().unwrap();
@@ -105,10 +108,5 @@ fn load_private_key(filename: &str) -> rustls::PrivateKey {
 
 async fn ping() -> Json<Value> {
     shadow!(build);
-    Json(json! ({"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}))
-}
-
-async fn panic() {
-    let a: Option<i32> = None;
-    let b = a.unwrap();
+    Json(json!({"version": 2, "build_time": build::BUILD_TIME, "commit": build::SHORT_COMMIT, "rust_version": build::RUST_VERSION}))
 }

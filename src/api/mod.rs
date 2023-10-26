@@ -1,18 +1,20 @@
-mod bind;
-mod key;
-mod ban;
-mod luck;
-
 use std::collections::HashMap;
+
 use axum::extract::Query;
 use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+
 use crate::api::ban::{ban_user, ban_user_qq};
 use crate::api::bind::bind_qq;
 use crate::api::key::examine_key;
 use crate::api::luck::calc_luck;
-use crate::user::{UserInfo};
+use crate::user::UserInfo;
+
+mod bind;
+mod key;
+mod ban;
+mod luck;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ApiKey {

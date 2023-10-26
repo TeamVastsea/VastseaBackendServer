@@ -1,6 +1,7 @@
-use bson::doc;
 use bson::DateTime;
+use bson::doc;
 use mongodb::Collection;
+
 use crate::api::ApiKey;
 use crate::MONGODB;
 

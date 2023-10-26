@@ -1,5 +1,6 @@
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
+
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use futures::executor::block_on;
@@ -8,8 +9,8 @@ use mongodb::{Client, Database};
 use mongodb::options::ClientOptions;
 use serde::{Deserialize, Serialize};
 use serde_inline_default::serde_inline_default;
+use tracing::{error, info};
 
-use simple_log::{error, info};
 use crate::CONFIG;
 
 #[serde_inline_default]

@@ -1,8 +1,8 @@
 use amqprs::BasicProperties;
 use amqprs::channel::{BasicPublishArguments, QueueBindArguments, QueueDeclareArguments};
 use amqprs::connection::{Connection, OpenConnectionArguments};
-use crate::{CONFIG};
 
+use crate::CONFIG;
 
 pub async fn github_post_receive(payload: String) {
     let args: OpenConnectionArguments = CONFIG.rabbitmq.uri.as_str().try_into().unwrap();

@@ -1,7 +1,7 @@
+use hyper::{Body, body, Client, http::HeaderValue, Request};
 use hyper_tls::HttpsConnector;
-
-use hyper::{Body, Client, Request, body, http::HeaderValue};
 use serde_json::{from_str, Value};
+
 use crate::user::UserMCProfile;
 
 pub static LOGIN_WITH_XBOX: &str = "https://api.minecraftservices.com/authentication/login_with_xbox";

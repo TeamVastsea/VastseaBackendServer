@@ -1,12 +1,13 @@
-use hyper_tls::HttpsConnector;
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
+use hyper::{Body, body, Client, http::HeaderValue, Request};
+use hyper_tls::HttpsConnector;
+use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use hyper::{Body, Client, Request, body, http::HeaderValue};
-use lazy_static::lazy_static;
-use serde_json::{from_str};
+use serde_json::from_str;
 use urlencoding::encode;
+
 use crate::CONFIG;
 
 lazy_static! {

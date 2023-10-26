@@ -1,11 +1,10 @@
 use std::collections::HashMap;
+
 use axum::extract::Query;
 use axum::http::StatusCode;
-
-use mongodb::bson::{doc};
+use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
 
 pub mod microsoft;
 pub mod xbox;
