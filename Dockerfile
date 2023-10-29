@@ -22,7 +22,9 @@ WORKDIR /app
 COPY --from=builder /app/target/release/backend_server /home/BackendServer/backend_server
 COPY --from=builder /app/target/release/key_tool /home/BackendServer/key_tool
 
-RUN apt-get update && apt-get install -y openssl
+RUN \
+  apt-get update && \
+  apt-get install -y curl vim openssl
 
 RUN \
   apt-get clean && \
