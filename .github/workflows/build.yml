@@ -2,7 +2,7 @@ name: Backend Server CI
 
 on:
   push:
-    types: [ main ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
