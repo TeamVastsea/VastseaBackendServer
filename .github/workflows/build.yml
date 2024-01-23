@@ -1,8 +1,8 @@
 name: Backend Server CI
 
 on:
-  release:
-    types: [ created ]
+  push:
+    types: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -25,13 +25,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to GitHub Packages
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and Push Docker Image
         id: docker_build
         uses: docker/build-push-action@v4
@@ -40,9 +33,6 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            ghcr.io/teamvastsea/backend-server:${{ github.ref_name }}
-            ghcr.io/teamvastsea/backend-server:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend-server:${{ github.ref_name }}
             ${{ secrets.DOCKERHUB_USERNAME }}/backend-server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
