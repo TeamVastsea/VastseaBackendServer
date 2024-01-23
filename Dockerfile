@@ -19,8 +19,8 @@ RUN cargo build --release
 # build slim image
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
-COPY --from=builder /app/target/release/backend_server /home/BackendServer/backend_server
-COPY --from=builder /app/target/release/key_tool /home/BackendServer/key_tool
+COPY --from=builder /app/target/release/backend_server /app/backend_server
+COPY --from=builder /app/target/release/key_tool /app/key_tool
 
 RUN \
   apt-get update && \
@@ -31,4 +31,4 @@ RUN \
   apt-get autoclean && \
   rm -rf /var/lib/apt/lists/*
 
-CMD ["bash"]
+CMD ["/app/backend_server"]
